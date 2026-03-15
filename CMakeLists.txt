@@ -63,6 +63,21 @@ if(NOT MSVC)
     target_compile_options(imgui_sharp PRIVATE -fvisibility=hidden)
 endif()
 
+# On macOS, rewrite the SDL3 dependency to @loader_path so imgui_sharp uses
+# the same libSDL3.dylib that the .NET runtime loads (from SdlSharp.Redist),
+# avoiding duplicate SDL3 copies in the same process.
+if(APPLE)
+    set_target_properties(imgui_sharp PROPERTIES
+        BUILD_RPATH ""
+        INSTALL_RPATH ""
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+    add_custom_command(TARGET imgui_sharp POST_BUILD
+        COMMAND install_name_tool -change @rpath/libSDL3.0.dylib @loader_path/libSDL3.dylib $<TARGET_FILE:imgui_sharp>
+        COMMENT "Rewriting SDL3 dependency to @loader_path"
+    )
+endif()
+
 # Install
 install(TARGETS imgui_sharp
     LIBRARY DESTINATION lib
