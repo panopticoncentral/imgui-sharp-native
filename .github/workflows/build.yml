@@ -49,22 +49,30 @@ jobs:
       - name: Verify exports
         shell: pwsh
         run: |
-          $dll = "build/Release/imgui_sharp.dll"
-          if (-not (Test-Path $dll)) { throw "Missing $dll" }
-          # PE export names are stored as plain ASCII, so findstr suffices
-          # and avoids needing dumpbin (which is only on PATH inside a VS
-          # developer shell).
-          & findstr /C:"IGSharp_Begin" $dll | Out-Null
-          if ($LASTEXITCODE -ne 0) {
-            throw "IGSharp_Begin not found in $dll (export missing or hidden?)"
+          Write-Host "Built artifacts under build/:"
+          Get-ChildItem -Recurse -Path build -Include *.dll,*.lib,*.exp |
+            Select-Object -ExpandProperty FullName | Write-Host
+
+          $dll = Get-ChildItem -Recurse -Path build -Filter imgui_sharp.dll |
+                 Select-Object -First 1
+          if (-not $dll) { throw "imgui_sharp.dll not found under build/" }
+
+          # PE export names are stored as plain ASCII. Read the whole file
+          # and search for IGSharp_Begin in the byte stream via .NET — no
+          # dependency on dumpbin (MSVC developer shell required) or
+          # findstr (cmd-era path quirks).
+          $bytes = [System.IO.File]::ReadAllBytes($dll.FullName)
+          $ascii = [System.Text.Encoding]::ASCII.GetString($bytes)
+          if ($ascii -notmatch 'IGSharp_Begin') {
+            throw "IGSharp_Begin not found in $($dll.FullName) (export missing or hidden?)"
           }
-          Write-Host "IGSharp_Begin export verified in $dll"
+          Write-Host "IGSharp_Begin export verified in $($dll.FullName)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.rid }}
-          path: build/Release/imgui_sharp.dll
+          path: build/**/imgui_sharp.dll
           if-no-files-found: error
 
   build-macos:
