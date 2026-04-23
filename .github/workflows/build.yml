@@ -1,0 +1,139 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      artifact-name:
+        description: "Name of the aggregated native artifact"
+        value: native-all
+
+jobs:
+  build-windows:
+    name: build (${{ matrix.rid }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            arch: x64
+          - rid: win-x86
+            arch: Win32
+          - rid: win-arm64
+            arch: ARM64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Fetch SDL3
+        shell: pwsh
+        run: ./scripts/fetch-sdl3.ps1
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -A ${{ matrix.arch }} `
+            -DSDL3_ROOT="$env:SDL3_ROOT" `
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Verify exports
+        shell: pwsh
+        run: |
+          $dll = "build/Release/imgui_sharp.dll"
+          if (-not (Test-Path $dll)) { throw "Missing $dll" }
+          $exports = & dumpbin /exports $dll
+          if (-not ($exports -match 'IGSharp_Begin')) {
+            Write-Host $exports
+            throw "IGSharp_Begin not exported from $dll"
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: build/Release/imgui_sharp.dll
+          if-no-files-found: error
+
+  build-macos:
+    name: build (${{ matrix.rid }})
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: osx-arm64
+            arch: arm64
+          - rid: osx-x64
+            arch: x86_64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Fetch SDL3
+        run: ./scripts/fetch-sdl3.sh
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DSDL3_ROOT="$SDL3_ROOT" \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Verify exports
+        run: |
+          dylib=build/libimgui_sharp.dylib
+          test -f "$dylib" || { echo "Missing $dylib"; exit 1; }
+          nm -gU "$dylib" | grep -q 'IGSharp_Begin' || {
+            nm -gU "$dylib"
+            echo "IGSharp_Begin not exported from $dylib" >&2
+            exit 1
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: build/libimgui_sharp.dylib
+          if-no-files-found: error
+
+  aggregate:
+    name: aggregate runtimes
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: artifacts
+
+      - name: Lay out runtimes/<rid>/native
+        run: |
+          mkdir -p runtimes
+          for dir in artifacts/native-*; do
+            rid="${dir#artifacts/native-}"
+            mkdir -p "runtimes/$rid/native"
+            cp "$dir"/* "runtimes/$rid/native/"
+          done
+          find runtimes -type f
+
+      - name: Upload combined artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-all
+          path: runtimes/
+          if-no-files-found: error

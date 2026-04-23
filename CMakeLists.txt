@@ -5,20 +5,26 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Paths to sibling repos
-set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/../imgui")
-set(SDL_DIR "${CMAKE_SOURCE_DIR}/../SDL")
+# ImGui sources live in a pinned git submodule at third_party/imgui.
+set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/third_party/imgui")
+if(NOT EXISTS "${IMGUI_DIR}/imgui.cpp")
+    message(FATAL_ERROR
+        "ImGui submodule not found at ${IMGUI_DIR}. "
+        "Run: git submodule update --init --recursive")
+endif()
 
-# SDL3 - find via cmake package or fall back to local build
-find_package(SDL3 QUIET)
+# SDL3: locate via find_package. CI passes -DSDL3_ROOT=<path> pointing at an
+# extracted SDL3 development package (VC zip on Windows, DMG contents on macOS).
+# Local developers can either set SDL3_ROOT or rely on a system-installed SDL3.
+if(DEFINED SDL3_ROOT)
+    list(PREPEND CMAKE_PREFIX_PATH "${SDL3_ROOT}")
+endif()
+
+find_package(SDL3 CONFIG QUIET)
 if(NOT SDL3_FOUND)
-    # Try local SDL build
-    if(EXISTS "${SDL_DIR}/build")
-        list(APPEND CMAKE_PREFIX_PATH "${SDL_DIR}/build")
-        find_package(SDL3 REQUIRED)
-    else()
-        message(FATAL_ERROR "SDL3 not found. Build SDL3 first: cd ../SDL && cmake -B build && cmake --build build")
-    endif()
+    message(FATAL_ERROR
+        "SDL3 not found. Pass -DSDL3_ROOT=<path-to-SDL3-dev-package> "
+        "or install SDL3 so find_package(SDL3 CONFIG) succeeds.")
 endif()
 
 # ImGui core sources

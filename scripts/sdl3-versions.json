@@ -1,0 +1,12 @@
+{
+  "comment": "SDL3 version pinned for build-time headers/import-libs. Must match SdlSharp.Redist's SDL3 version so consumers get one compatible copy.",
+  "sdl3_version": "3.4.2",
+  "windows": {
+    "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-devel-3.4.2-VC.zip",
+    "sha256": "fd4c60400634df13a86b69432b22b32f23bccd6a2f4c6a34b42b471c65eb4fd2"
+  },
+  "macos": {
+    "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-3.4.2.dmg",
+    "sha256": "383da24667fcd5216b78ace9adf63b795b980e877911272fb0a615755869d87b"
+  }
+}

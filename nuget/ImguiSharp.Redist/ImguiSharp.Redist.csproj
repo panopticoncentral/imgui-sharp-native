@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.0.4">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<NoWarn>NU5128</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>ImguiSharp.Redist</PackageId>
+		<Description>A redist for the imgui_sharp native wrapper around Dear ImGui (https://github.com/ocornut/imgui) with SDL3 backends. Consumed by SdlSharp.ImGui. libSDL3 is not included — obtain it from SdlSharp.Redist.</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<NoBuildOutput>true</NoBuildOutput>
+		<SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../README.md" Pack="true" PackagePath="" Visible="false" />
+	</ItemGroup>
+
+	<!--
+		Native binaries are populated into runtimes/<rid>/native/ by the CI
+		build matrix before `dotnet pack` runs. Locally, run the build scripts
+		to produce them. Missing RIDs at pack time will simply be omitted.
+	-->
+	<ItemGroup>
+		<Content Include="runtimes/**/*"
+		         Pack="true"
+		         PackagePath="runtimes/"
+		         Visible="false"
+		         CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+</Project>

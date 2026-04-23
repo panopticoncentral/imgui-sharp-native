@@ -1,0 +1,4 @@
+# Native binaries are baked in by CI (or locally) before `dotnet pack`.
+runtimes/
+bin/
+obj/

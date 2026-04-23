@@ -1,1 +1,9 @@
 build/
+bin/
+obj/
+packages/
+sdl3/
+*.nupkg
+.idea/
+.vs/
+.vscode/
