@@ -51,11 +51,14 @@ jobs:
         run: |
           $dll = "build/Release/imgui_sharp.dll"
           if (-not (Test-Path $dll)) { throw "Missing $dll" }
-          $exports = & dumpbin /exports $dll
-          if (-not ($exports -match 'IGSharp_Begin')) {
-            Write-Host $exports
-            throw "IGSharp_Begin not exported from $dll"
+          # PE export names are stored as plain ASCII, so findstr suffices
+          # and avoids needing dumpbin (which is only on PATH inside a VS
+          # developer shell).
+          & findstr /C:"IGSharp_Begin" $dll | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "IGSharp_Begin not found in $dll (export missing or hidden?)"
           }
+          Write-Host "IGSharp_Begin export verified in $dll"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
