@@ -133,14 +133,20 @@ jobs:
           path: artifacts
 
       - name: Lay out runtimes/<rid>/native
+        # Windows artifacts preserve build/**/*.dll nesting (e.g. Release/
+        # subdir), so `find` is used to locate the actual binaries
+        # regardless of per-arch layout.
         run: |
+          set -euo pipefail
           mkdir -p runtimes
           for dir in artifacts/native-*; do
             rid="${dir#artifacts/native-}"
             mkdir -p "runtimes/$rid/native"
-            cp "$dir"/* "runtimes/$rid/native/"
+            find "$dir" -type f \( -name '*.dll' -o -name '*.dylib' \) \
+              -exec cp -v {} "runtimes/$rid/native/" \;
           done
-          find runtimes -type f
+          echo "--- final layout ---"
+          find runtimes -type f | sort
 
       - name: Upload combined artifact
         uses: actions/upload-artifact@v4
