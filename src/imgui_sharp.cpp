@@ -599,6 +599,65 @@ void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* dl, IGSharp_Vec2 p2, IGSh
 void IGSharp_DrawList_PathRect(void* dl, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags)
 { DL(dl)->PathRect(ToImVec2(rect_min), ToImVec2(rect_max), rounding, flags); }
 
+// --- InputText with callback ---
+
+bool IGSharp_InputTextEx(const char* label, char* buf, size_t buf_size, int flags, IGSharp_InputTextCallback callback, void* user_data)
+{ return ImGui::InputText(label, buf, buf_size, flags, (ImGuiInputTextCallback)callback, user_data); }
+
+bool IGSharp_InputTextMultilineEx(const char* label, char* buf, size_t buf_size, IGSharp_Vec2 size, int flags, IGSharp_InputTextCallback callback, void* user_data)
+{ return ImGui::InputTextMultiline(label, buf, buf_size, ToImVec2(size), flags, (ImGuiInputTextCallback)callback, user_data); }
+
+bool IGSharp_InputTextWithHintEx(const char* label, const char* hint, char* buf, size_t buf_size, int flags, IGSharp_InputTextCallback callback, void* user_data)
+{ return ImGui::InputTextWithHint(label, hint, buf, buf_size, flags, (ImGuiInputTextCallback)callback, user_data); }
+
+// --- InputTextCallbackData: Field Accessors ---
+
+#define CBD(p) ((ImGuiInputTextCallbackData*)(p))
+
+int            IGSharp_InputTextCallbackData_GetEventFlag(void* d)         { return CBD(d)->EventFlag; }
+int            IGSharp_InputTextCallbackData_GetFlags(void* d)             { return CBD(d)->Flags; }
+void*          IGSharp_InputTextCallbackData_GetUserData(void* d)          { return CBD(d)->UserData; }
+int            IGSharp_InputTextCallbackData_GetEventKey(void* d)          { return CBD(d)->EventKey; }
+unsigned short IGSharp_InputTextCallbackData_GetEventChar(void* d)         { return (unsigned short)CBD(d)->EventChar; }
+void           IGSharp_InputTextCallbackData_SetEventChar(void* d, unsigned short c) { CBD(d)->EventChar = (ImWchar)c; }
+bool           IGSharp_InputTextCallbackData_GetEventActivated(void* d)    { return CBD(d)->EventActivated; }
+char*          IGSharp_InputTextCallbackData_GetBuf(void* d)               { return CBD(d)->Buf; }
+int            IGSharp_InputTextCallbackData_GetBufTextLen(void* d)        { return CBD(d)->BufTextLen; }
+void           IGSharp_InputTextCallbackData_SetBufTextLen(void* d, int v) { CBD(d)->BufTextLen = v; }
+int            IGSharp_InputTextCallbackData_GetBufSize(void* d)           { return CBD(d)->BufSize; }
+bool           IGSharp_InputTextCallbackData_GetBufDirty(void* d)          { return CBD(d)->BufDirty; }
+void           IGSharp_InputTextCallbackData_SetBufDirty(void* d, bool v)  { CBD(d)->BufDirty = v; }
+int            IGSharp_InputTextCallbackData_GetCursorPos(void* d)         { return CBD(d)->CursorPos; }
+void           IGSharp_InputTextCallbackData_SetCursorPos(void* d, int v)  { CBD(d)->CursorPos = v; }
+int            IGSharp_InputTextCallbackData_GetSelectionStart(void* d)    { return CBD(d)->SelectionStart; }
+void           IGSharp_InputTextCallbackData_SetSelectionStart(void* d, int v) { CBD(d)->SelectionStart = v; }
+int            IGSharp_InputTextCallbackData_GetSelectionEnd(void* d)      { return CBD(d)->SelectionEnd; }
+void           IGSharp_InputTextCallbackData_SetSelectionEnd(void* d, int v)   { CBD(d)->SelectionEnd = v; }
+
+// --- InputTextCallbackData: Helper Methods ---
+
+void IGSharp_InputTextCallbackData_DeleteChars(void* d, int pos, int bytes_count) { CBD(d)->DeleteChars(pos, bytes_count); }
+void IGSharp_InputTextCallbackData_InsertChars(void* d, int pos, const char* text, const char* text_end) { CBD(d)->InsertChars(pos, text, text_end); }
+void IGSharp_InputTextCallbackData_SelectAll(void* d)        { CBD(d)->SelectAll(); }
+void IGSharp_InputTextCallbackData_ClearSelection(void* d)   { CBD(d)->ClearSelection(); }
+bool IGSharp_InputTextCallbackData_HasSelection(void* d)     { return CBD(d)->HasSelection(); }
+
+#undef CBD
+
+// --- Plot Widgets ---
+
+void IGSharp_PlotLines(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride)
+{ ImGui::PlotLines(label, values, values_count, values_offset, overlay_text, scale_min, scale_max, ToImVec2(graph_size), stride); }
+
+void IGSharp_PlotLinesCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size)
+{ ImGui::PlotLines(label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, ToImVec2(graph_size)); }
+
+void IGSharp_PlotHistogram(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride)
+{ ImGui::PlotHistogram(label, values, values_count, values_offset, overlay_text, scale_min, scale_max, ToImVec2(graph_size), stride); }
+
+void IGSharp_PlotHistogramCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size)
+{ ImGui::PlotHistogram(label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, ToImVec2(graph_size)); }
+
 // --- Fonts: Atlas Loading ---
 
 void* IGSharp_IO_GetFonts(void)                 { return ImGui::GetIO().Fonts; }

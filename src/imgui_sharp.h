@@ -353,6 +353,49 @@ IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGShar
 IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
 IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
 
+// --- InputText with callback ---
+typedef int (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
+
+IGSHARP_API bool IGSharp_InputTextEx(const char* label, char* buf, size_t buf_size, int flags, IGSharp_InputTextCallback callback, void* user_data);
+IGSHARP_API bool IGSharp_InputTextMultilineEx(const char* label, char* buf, size_t buf_size, IGSharp_Vec2 size, int flags, IGSharp_InputTextCallback callback, void* user_data);
+IGSHARP_API bool IGSharp_InputTextWithHintEx(const char* label, const char* hint, char* buf, size_t buf_size, int flags, IGSharp_InputTextCallback callback, void* user_data);
+
+// --- InputTextCallbackData: Field Accessors ---
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetEventFlag(void* data);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetFlags(void* data);
+IGSHARP_API void*          IGSharp_InputTextCallbackData_GetUserData(void* data);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetEventKey(void* data);
+IGSHARP_API unsigned short IGSharp_InputTextCallbackData_GetEventChar(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetEventChar(void* data, unsigned short c);
+IGSHARP_API bool           IGSharp_InputTextCallbackData_GetEventActivated(void* data);
+IGSHARP_API char*          IGSharp_InputTextCallbackData_GetBuf(void* data);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetBufTextLen(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetBufTextLen(void* data, int v);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetBufSize(void* data);
+IGSHARP_API bool           IGSharp_InputTextCallbackData_GetBufDirty(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetBufDirty(void* data, bool v);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetCursorPos(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetCursorPos(void* data, int v);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetSelectionStart(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetSelectionStart(void* data, int v);
+IGSHARP_API int            IGSharp_InputTextCallbackData_GetSelectionEnd(void* data);
+IGSHARP_API void           IGSharp_InputTextCallbackData_SetSelectionEnd(void* data, int v);
+
+// --- InputTextCallbackData: Helper Methods ---
+IGSHARP_API void IGSharp_InputTextCallbackData_DeleteChars(void* data, int pos, int bytes_count);
+IGSHARP_API void IGSharp_InputTextCallbackData_InsertChars(void* data, int pos, const char* text, const char* text_end);
+IGSHARP_API void IGSharp_InputTextCallbackData_SelectAll(void* data);
+IGSHARP_API void IGSharp_InputTextCallbackData_ClearSelection(void* data);
+IGSHARP_API bool IGSharp_InputTextCallbackData_HasSelection(void* data);
+
+// --- Plot Widgets ---
+typedef float (*IGSharp_PlotValuesGetter)(void* data, int idx);
+
+IGSHARP_API void IGSharp_PlotLines(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
+IGSHARP_API void IGSharp_PlotLinesCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
+IGSHARP_API void IGSharp_PlotHistogram(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
+IGSHARP_API void IGSharp_PlotHistogramCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
+
 // --- Fonts: Atlas Loading ---
 IGSHARP_API void* IGSharp_IO_GetFonts(void);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas);
