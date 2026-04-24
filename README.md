@@ -72,8 +72,55 @@ publisher on nuget.org.
 
 ## ImGui version
 
-Pinned by the `third_party/imgui` submodule SHA. Bump by checking out a new
-tag inside the submodule and committing the updated pointer.
+Pinned by the `third_party/imgui` submodule SHA. See the current tag with
+`git -C third_party/imgui describe --tags HEAD`.
+
+### Bumping
+
+```bash
+cd third_party/imgui
+git fetch --tags
+git checkout vX.Y.Z         # pick the new release tag
+cd ../..
+git add third_party/imgui
+git commit -m "Bump Dear ImGui to vX.Y.Z"
+```
+
+Then push — CI rebuilds all 5 RIDs and the new `ImguiSharp.Redist` preview
+can be cut by pushing a `v*` release tag.
+
+### After a bump, verify
+
+1. **Read the upstream changelog** in `third_party/imgui/docs/CHANGELOG.txt`
+   — skim for renamed/removed public APIs, struct layout changes, and new
+   APIs worth wrapping.
+2. **Local build still clean** — any rename of a field we read directly
+   (on `ImGuiIO`, `ImGuiStyle`, `ImGuiListClipper`, `ImGuiPayload`,
+   `ImGuiMultiSelectIO`, `ImGuiSelectionRequest`, `ImGuiTableSortSpecs`,
+   `ImGuiInputTextCallbackData`) shows up as a compile error in
+   `imgui_sharp.cpp` — fix the shim.
+3. **Binary-layout check still passes at runtime.** `IGSharp_CheckVersion`
+   calls `DebugCheckVersionAndDataLayout` which validates `ImGuiIO`,
+   `ImGuiStyle`, `ImVec2/4`, `ImDrawVert`, `ImDrawIdx` sizes against what
+   the C# caller expects. If this asserts after a bump, the C# wrapper
+   (`SdlSharp.ImGui`) needs matching struct-layout updates before
+   releasing.
+4. **CI green on all 5 matrix legs.**
+5. **New APIs worth wrapping?** — `git -C third_party/imgui log vOLD..vNEW -- imgui.h`
+   shows changes to the public header. Consider exposing any additions
+   that fit the coverage criteria in the API table above.
+
+### Version sensitivity
+
+- `IMGUI_VERSION_NUM` is baked into the shared library. A library/C#-caller
+  mismatch at runtime asserts in `DebugCheckVersionAndDataLayout` rather
+  than silently corrupting — always ship `ImguiSharp.Redist` and the
+  matching `SdlSharp.ImGui` binding together.
+- Breaking upstream changes warrant an `ImguiSharp.Redist` major version
+  bump.
+- The `-docking` tag is a separate upstream branch we don't track.
+  Switching would require additional shims for multi-viewport,
+  `ImGuiPlatformIO`, and dock-builder APIs.
 
 ## API coverage
 
