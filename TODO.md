@@ -6,7 +6,7 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 ## Done ✅
 
 - CMake build system (imgui core + SDL3 backends + C wrapper → single shared lib)
-- Core widget subset (~460 exported functions)
+- Core widget subset (~500 exported functions)
 - DrawList API (primitives, path builder, images, clipping)
 - Misc utilities (CalcTextSize, GetColorU32, ColorConvert*, key/mouse queries, viewport)
 - Font loading (TTF from file, memory, compressed memory; PushFont/PopFont; font default)
@@ -15,6 +15,9 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 - Full ImGuiStyle field access (all spacing/rounding/alignment/color fields)
 - InputText callbacks (completion/history/edit/charfilter/resize with full CallbackData access)
 - Plot widgets (PlotLines/PlotHistogram, both array and callback variants)
+- Drag and drop (source/target + ImGuiPayload accessors)
+- Multi-select (BeginMultiSelect/EndMultiSelect + ImGuiMultiSelectIO/ImGuiSelectionRequest accessors)
+- Table sort specs (TableGetSortSpecs + ImGuiTableSortSpecs/ImGuiTableColumnSortSpecs accessors)
 - SDL3 platform backend wrapper
 - SDL_GPU renderer backend wrapper
 - Self-contained source tree (ImGui as `third_party/imgui` git submodule; SDL3 fetched by scripts)
@@ -29,11 +32,6 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 - [ ] Register trusted publisher on nuget.org for this repo + `release.yml`
 - [ ] Cut `v0.1.0-preview.1` tag and verify nuget.org publish
 - [ ] Linux build support (requires building SDL3 from source — upstream ships no Linux binaries)
-
-### Expand API surface
-- [ ] Drag and drop (BeginDragDropSource/Target, SetDragDropPayload, AcceptDragDropPayload)
-- [ ] Multi-select (BeginMultiSelect/EndMultiSelect, ImGuiMultiSelectIO)
-- [ ] Table sort specs (TableGetSortSpecs — needs struct marshalling)
 
 ### Maintenance
 - [ ] Track Dear ImGui version updates (currently pinned to v1.92.6 via submodule)

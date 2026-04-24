@@ -353,6 +353,58 @@ IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGShar
 IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
 IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
 
+// --- Drag and Drop ---
+IGSHARP_API bool  IGSharp_BeginDragDropSource(int flags);
+IGSHARP_API bool  IGSharp_SetDragDropPayload(const char* type, const void* data, size_t sz, int cond);
+IGSHARP_API void  IGSharp_EndDragDropSource(void);
+IGSHARP_API bool  IGSharp_BeginDragDropTarget(void);
+IGSHARP_API void* IGSharp_AcceptDragDropPayload(const char* type, int flags);
+IGSHARP_API void  IGSharp_EndDragDropTarget(void);
+IGSHARP_API void* IGSharp_GetDragDropPayload(void);
+
+// --- Payload Accessors ---
+IGSHARP_API void*       IGSharp_Payload_GetData(void* payload);
+IGSHARP_API int         IGSharp_Payload_GetDataSize(void* payload);
+IGSHARP_API const char* IGSharp_Payload_GetDataType(void* payload);
+IGSHARP_API bool        IGSharp_Payload_IsDataType(void* payload, const char* type);
+IGSHARP_API bool        IGSharp_Payload_IsPreview(void* payload);
+IGSHARP_API bool        IGSharp_Payload_IsDelivery(void* payload);
+
+// --- Multi-Select ---
+IGSHARP_API void* IGSharp_BeginMultiSelect(int flags, int selection_size, int items_count);
+IGSHARP_API void* IGSharp_EndMultiSelect(void);
+IGSHARP_API void  IGSharp_SetNextItemSelectionUserData(long long selection_user_data);
+IGSHARP_API bool  IGSharp_IsItemToggledSelection(void);
+
+// --- MultiSelectIO Accessors ---
+IGSHARP_API int       IGSharp_MultiSelectIO_GetRequestsCount(void* io);
+IGSHARP_API void*     IGSharp_MultiSelectIO_GetRequest(void* io, int index);
+IGSHARP_API long long IGSharp_MultiSelectIO_GetRangeSrcItem(void* io);
+IGSHARP_API long long IGSharp_MultiSelectIO_GetNavIdItem(void* io);
+IGSHARP_API bool      IGSharp_MultiSelectIO_GetNavIdSelected(void* io);
+IGSHARP_API bool      IGSharp_MultiSelectIO_GetRangeSrcReset(void* io);
+IGSHARP_API void      IGSharp_MultiSelectIO_SetRangeSrcReset(void* io, bool v);
+IGSHARP_API int       IGSharp_MultiSelectIO_GetItemsCount(void* io);
+
+// --- SelectionRequest Accessors ---
+IGSHARP_API int       IGSharp_SelectionRequest_GetType(void* request);
+IGSHARP_API bool      IGSharp_SelectionRequest_GetSelected(void* request);
+IGSHARP_API int       IGSharp_SelectionRequest_GetRangeDirection(void* request);
+IGSHARP_API long long IGSharp_SelectionRequest_GetRangeFirstItem(void* request);
+IGSHARP_API long long IGSharp_SelectionRequest_GetRangeLastItem(void* request);
+
+// --- Table Sort Specs ---
+IGSHARP_API void* IGSharp_TableGetSortSpecs(void);
+IGSHARP_API int   IGSharp_TableSortSpecs_GetSpecsCount(void* specs);
+IGSHARP_API void* IGSharp_TableSortSpecs_GetSpec(void* specs, int index);
+IGSHARP_API bool  IGSharp_TableSortSpecs_GetSpecsDirty(void* specs);
+IGSHARP_API void  IGSharp_TableSortSpecs_SetSpecsDirty(void* specs, bool v);
+
+IGSHARP_API unsigned int IGSharp_TableColumnSortSpecs_GetColumnUserID(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetColumnIndex(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortOrder(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortDirection(void* spec);
+
 // --- InputText with callback ---
 typedef int (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
 

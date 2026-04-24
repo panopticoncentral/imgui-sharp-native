@@ -599,6 +599,87 @@ void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* dl, IGSharp_Vec2 p2, IGSh
 void IGSharp_DrawList_PathRect(void* dl, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags)
 { DL(dl)->PathRect(ToImVec2(rect_min), ToImVec2(rect_max), rounding, flags); }
 
+// --- Drag and Drop ---
+
+bool  IGSharp_BeginDragDropSource(int flags)                 { return ImGui::BeginDragDropSource(flags); }
+bool  IGSharp_SetDragDropPayload(const char* type, const void* data, size_t sz, int cond)
+{ return ImGui::SetDragDropPayload(type, data, sz, cond); }
+void  IGSharp_EndDragDropSource(void)                        { ImGui::EndDragDropSource(); }
+bool  IGSharp_BeginDragDropTarget(void)                      { return ImGui::BeginDragDropTarget(); }
+void* IGSharp_AcceptDragDropPayload(const char* type, int flags)
+{ return (void*)ImGui::AcceptDragDropPayload(type, flags); }
+void  IGSharp_EndDragDropTarget(void)                        { ImGui::EndDragDropTarget(); }
+void* IGSharp_GetDragDropPayload(void)                       { return (void*)ImGui::GetDragDropPayload(); }
+
+// --- Payload Accessors ---
+
+#define PL(p) ((const ImGuiPayload*)(p))
+void*       IGSharp_Payload_GetData(void* p)                 { return p ? PL(p)->Data : nullptr; }
+int         IGSharp_Payload_GetDataSize(void* p)             { return p ? PL(p)->DataSize : 0; }
+const char* IGSharp_Payload_GetDataType(void* p)             { return p ? PL(p)->DataType : nullptr; }
+bool        IGSharp_Payload_IsDataType(void* p, const char* type) { return p ? PL(p)->IsDataType(type) : false; }
+bool        IGSharp_Payload_IsPreview(void* p)               { return p ? PL(p)->IsPreview() : false; }
+bool        IGSharp_Payload_IsDelivery(void* p)              { return p ? PL(p)->IsDelivery() : false; }
+#undef PL
+
+// --- Multi-Select ---
+
+void* IGSharp_BeginMultiSelect(int flags, int selection_size, int items_count)
+{ return ImGui::BeginMultiSelect(flags, selection_size, items_count); }
+
+void* IGSharp_EndMultiSelect(void)                           { return ImGui::EndMultiSelect(); }
+void  IGSharp_SetNextItemSelectionUserData(long long v)      { ImGui::SetNextItemSelectionUserData((ImGuiSelectionUserData)v); }
+bool  IGSharp_IsItemToggledSelection(void)                   { return ImGui::IsItemToggledSelection(); }
+
+// --- MultiSelectIO Accessors ---
+
+#define MS(p) ((ImGuiMultiSelectIO*)(p))
+int       IGSharp_MultiSelectIO_GetRequestsCount(void* io)   { return MS(io)->Requests.Size; }
+void*     IGSharp_MultiSelectIO_GetRequest(void* io, int i)
+{
+    if (!io || i < 0 || i >= MS(io)->Requests.Size) return nullptr;
+    return &MS(io)->Requests[i];
+}
+long long IGSharp_MultiSelectIO_GetRangeSrcItem(void* io)    { return (long long)MS(io)->RangeSrcItem; }
+long long IGSharp_MultiSelectIO_GetNavIdItem(void* io)       { return (long long)MS(io)->NavIdItem; }
+bool      IGSharp_MultiSelectIO_GetNavIdSelected(void* io)   { return MS(io)->NavIdSelected; }
+bool      IGSharp_MultiSelectIO_GetRangeSrcReset(void* io)   { return MS(io)->RangeSrcReset; }
+void      IGSharp_MultiSelectIO_SetRangeSrcReset(void* io, bool v) { MS(io)->RangeSrcReset = v; }
+int       IGSharp_MultiSelectIO_GetItemsCount(void* io)      { return MS(io)->ItemsCount; }
+#undef MS
+
+// --- SelectionRequest Accessors ---
+
+#define SR(p) ((ImGuiSelectionRequest*)(p))
+int       IGSharp_SelectionRequest_GetType(void* r)              { return SR(r)->Type; }
+bool      IGSharp_SelectionRequest_GetSelected(void* r)          { return SR(r)->Selected; }
+int       IGSharp_SelectionRequest_GetRangeDirection(void* r)    { return SR(r)->RangeDirection; }
+long long IGSharp_SelectionRequest_GetRangeFirstItem(void* r)    { return (long long)SR(r)->RangeFirstItem; }
+long long IGSharp_SelectionRequest_GetRangeLastItem(void* r)     { return (long long)SR(r)->RangeLastItem; }
+#undef SR
+
+// --- Table Sort Specs ---
+
+void* IGSharp_TableGetSortSpecs(void)                        { return ImGui::TableGetSortSpecs(); }
+
+#define TSS(p) ((ImGuiTableSortSpecs*)(p))
+int   IGSharp_TableSortSpecs_GetSpecsCount(void* s)          { return TSS(s)->SpecsCount; }
+void* IGSharp_TableSortSpecs_GetSpec(void* s, int i)
+{
+    if (!s || i < 0 || i >= TSS(s)->SpecsCount) return nullptr;
+    return (void*)&TSS(s)->Specs[i];
+}
+bool  IGSharp_TableSortSpecs_GetSpecsDirty(void* s)          { return TSS(s)->SpecsDirty; }
+void  IGSharp_TableSortSpecs_SetSpecsDirty(void* s, bool v)  { TSS(s)->SpecsDirty = v; }
+#undef TSS
+
+#define TCS(p) ((const ImGuiTableColumnSortSpecs*)(p))
+unsigned int IGSharp_TableColumnSortSpecs_GetColumnUserID(void* c)   { return (unsigned int)TCS(c)->ColumnUserID; }
+int          IGSharp_TableColumnSortSpecs_GetColumnIndex(void* c)    { return (int)TCS(c)->ColumnIndex; }
+int          IGSharp_TableColumnSortSpecs_GetSortOrder(void* c)      { return (int)TCS(c)->SortOrder; }
+int          IGSharp_TableColumnSortSpecs_GetSortDirection(void* c)  { return (int)TCS(c)->SortDirection; }
+#undef TCS
+
 // --- InputText with callback ---
 
 bool IGSharp_InputTextEx(const char* label, char* buf, size_t buf_size, int flags, IGSharp_InputTextCallback callback, void* user_data)
