@@ -599,9 +599,232 @@ void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* dl, IGSharp_Vec2 p2, IGSh
 void IGSharp_DrawList_PathRect(void* dl, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags)
 { DL(dl)->PathRect(ToImVec2(rect_min), ToImVec2(rect_max), rounding, flags); }
 
-// --- Fonts (minimal) ---
+// --- Fonts: Atlas Loading ---
 
 void* IGSharp_IO_GetFonts(void)                 { return ImGui::GetIO().Fonts; }
+
 void* IGSharp_FontAtlas_AddFontDefault(void* atlas)
 { return ((ImFontAtlas*)atlas)->AddFontDefault(); }
+
+void* IGSharp_FontAtlas_AddFontFromFileTTF(void* atlas, const char* filename, float size_pixels)
+{ return ((ImFontAtlas*)atlas)->AddFontFromFileTTF(filename, size_pixels); }
+
+void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int font_data_size, float size_pixels, bool transfer_ownership)
+{
+    ImFontConfig cfg;
+    cfg.FontDataOwnedByAtlas = transfer_ownership;
+    return ((ImFontAtlas*)atlas)->AddFontFromMemoryTTF(font_data, font_data_size, size_pixels, &cfg);
+}
+
+void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels)
+{ return ((ImFontAtlas*)atlas)->AddFontFromMemoryCompressedTTF(compressed_data, compressed_size, size_pixels); }
+
 bool IGSharp_FontAtlas_Build(void* atlas)       { return ((ImFontAtlas*)atlas)->Build(); }
+void IGSharp_FontAtlas_Clear(void* atlas)       { ((ImFontAtlas*)atlas)->Clear(); }
+void IGSharp_FontAtlas_ClearFonts(void* atlas)  { ((ImFontAtlas*)atlas)->ClearFonts(); }
+int  IGSharp_FontAtlas_GetFontCount(void* atlas){ return ((ImFontAtlas*)atlas)->Fonts.Size; }
+void* IGSharp_FontAtlas_GetFont(void* atlas, int index)
+{
+    ImFontAtlas* a = (ImFontAtlas*)atlas;
+    if (index < 0 || index >= a->Fonts.Size) return nullptr;
+    return a->Fonts[index];
+}
+
+void IGSharp_IO_SetFontDefault(void* font)      { ImGui::GetIO().FontDefault = (ImFont*)font; }
+void* IGSharp_IO_GetFontDefault(void)           { return ImGui::GetIO().FontDefault; }
+
+// --- Fonts: Push/Pop/Query ---
+
+void IGSharp_PushFont(void* font, float font_size_base_unscaled)
+{ ImGui::PushFont((ImFont*)font, font_size_base_unscaled); }
+void IGSharp_PopFont(void)                      { ImGui::PopFont(); }
+void* IGSharp_GetFont(void)                     { return ImGui::GetFont(); }
+float IGSharp_GetFontSize(void)                 { return ImGui::GetFontSize(); }
+
+// --- ListClipper ---
+
+void* IGSharp_ListClipper_New(void)             { return new ImGuiListClipper(); }
+void IGSharp_ListClipper_Delete(void* clipper)  { delete (ImGuiListClipper*)clipper; }
+
+void IGSharp_ListClipper_Begin(void* clipper, int items_count, float items_height)
+{ ((ImGuiListClipper*)clipper)->Begin(items_count, items_height); }
+
+void IGSharp_ListClipper_End(void* clipper)     { ((ImGuiListClipper*)clipper)->End(); }
+bool IGSharp_ListClipper_Step(void* clipper)    { return ((ImGuiListClipper*)clipper)->Step(); }
+
+void IGSharp_ListClipper_IncludeItemsByIndex(void* clipper, int item_begin, int item_end)
+{ ((ImGuiListClipper*)clipper)->IncludeItemsByIndex(item_begin, item_end); }
+
+void IGSharp_ListClipper_SeekCursorForItem(void* clipper, int item_index)
+{ ((ImGuiListClipper*)clipper)->SeekCursorForItem(item_index); }
+
+int IGSharp_ListClipper_GetDisplayStart(void* clipper) { return ((ImGuiListClipper*)clipper)->DisplayStart; }
+int IGSharp_ListClipper_GetDisplayEnd(void* clipper)   { return ((ImGuiListClipper*)clipper)->DisplayEnd; }
+
+// --- IO: Field Accessors ---
+
+#define IO() ImGui::GetIO()
+
+IGSharp_Vec2 IGSharp_IO_GetDisplaySize(void)                    { return FromImVec2(IO().DisplaySize); }
+void         IGSharp_IO_SetDisplaySize(IGSharp_Vec2 v)          { IO().DisplaySize = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_IO_GetDisplayFramebufferScale(void)        { return FromImVec2(IO().DisplayFramebufferScale); }
+void         IGSharp_IO_SetDisplayFramebufferScale(IGSharp_Vec2 v) { IO().DisplayFramebufferScale = ToImVec2(v); }
+float        IGSharp_IO_GetDeltaTime(void)                      { return IO().DeltaTime; }
+void         IGSharp_IO_SetDeltaTime(float v)                   { IO().DeltaTime = v; }
+IGSharp_Vec2 IGSharp_IO_GetMousePos(void)                       { return FromImVec2(IO().MousePos); }
+IGSharp_Vec2 IGSharp_IO_GetMouseDelta(void)                     { return FromImVec2(IO().MouseDelta); }
+float        IGSharp_IO_GetMouseWheel(void)                     { return IO().MouseWheel; }
+float        IGSharp_IO_GetMouseWheelH(void)                    { return IO().MouseWheelH; }
+bool         IGSharp_IO_GetKeyCtrl(void)                        { return IO().KeyCtrl; }
+bool         IGSharp_IO_GetKeyShift(void)                       { return IO().KeyShift; }
+bool         IGSharp_IO_GetKeyAlt(void)                         { return IO().KeyAlt; }
+bool         IGSharp_IO_GetKeySuper(void)                       { return IO().KeySuper; }
+bool         IGSharp_IO_GetWantTextInput(void)                  { return IO().WantTextInput; }
+bool         IGSharp_IO_GetWantSetMousePos(void)                { return IO().WantSetMousePos; }
+bool         IGSharp_IO_GetWantSaveIniSettings(void)            { return IO().WantSaveIniSettings; }
+void         IGSharp_IO_SetWantSaveIniSettings(bool v)          { IO().WantSaveIniSettings = v; }
+bool         IGSharp_IO_GetNavActive(void)                      { return IO().NavActive; }
+bool         IGSharp_IO_GetNavVisible(void)                     { return IO().NavVisible; }
+int          IGSharp_IO_GetMetricsRenderVertices(void)          { return IO().MetricsRenderVertices; }
+int          IGSharp_IO_GetMetricsRenderIndices(void)           { return IO().MetricsRenderIndices; }
+int          IGSharp_IO_GetMetricsRenderWindows(void)           { return IO().MetricsRenderWindows; }
+int          IGSharp_IO_GetMetricsActiveWindows(void)           { return IO().MetricsActiveWindows; }
+int          IGSharp_IO_GetBackendFlags(void)                   { return IO().BackendFlags; }
+void         IGSharp_IO_SetBackendFlags(int v)                  { IO().BackendFlags = v; }
+float        IGSharp_IO_GetMouseDoubleClickTime(void)           { return IO().MouseDoubleClickTime; }
+void         IGSharp_IO_SetMouseDoubleClickTime(float v)        { IO().MouseDoubleClickTime = v; }
+float        IGSharp_IO_GetMouseDoubleClickMaxDist(void)        { return IO().MouseDoubleClickMaxDist; }
+void         IGSharp_IO_SetMouseDoubleClickMaxDist(float v)     { IO().MouseDoubleClickMaxDist = v; }
+float        IGSharp_IO_GetMouseDragThreshold(void)             { return IO().MouseDragThreshold; }
+void         IGSharp_IO_SetMouseDragThreshold(float v)          { IO().MouseDragThreshold = v; }
+float        IGSharp_IO_GetKeyRepeatDelay(void)                 { return IO().KeyRepeatDelay; }
+void         IGSharp_IO_SetKeyRepeatDelay(float v)              { IO().KeyRepeatDelay = v; }
+float        IGSharp_IO_GetKeyRepeatRate(void)                  { return IO().KeyRepeatRate; }
+void         IGSharp_IO_SetKeyRepeatRate(float v)               { IO().KeyRepeatRate = v; }
+
+// --- IO: Event Queue ---
+
+void IGSharp_IO_AddKeyEvent(int key, bool down)                 { IO().AddKeyEvent((ImGuiKey)key, down); }
+void IGSharp_IO_AddKeyAnalogEvent(int key, bool down, float v)  { IO().AddKeyAnalogEvent((ImGuiKey)key, down, v); }
+void IGSharp_IO_AddMousePosEvent(float x, float y)              { IO().AddMousePosEvent(x, y); }
+void IGSharp_IO_AddMouseButtonEvent(int button, bool down)      { IO().AddMouseButtonEvent(button, down); }
+void IGSharp_IO_AddMouseWheelEvent(float wx, float wy)          { IO().AddMouseWheelEvent(wx, wy); }
+void IGSharp_IO_AddMouseSourceEvent(int source)                 { IO().AddMouseSourceEvent((ImGuiMouseSource)source); }
+void IGSharp_IO_AddFocusEvent(bool focused)                     { IO().AddFocusEvent(focused); }
+void IGSharp_IO_AddInputCharacter(unsigned int c)               { IO().AddInputCharacter(c); }
+void IGSharp_IO_AddInputCharacterUTF16(unsigned short c)        { IO().AddInputCharacterUTF16((ImWchar16)c); }
+void IGSharp_IO_AddInputCharactersUTF8(const char* str)         { IO().AddInputCharactersUTF8(str); }
+void IGSharp_IO_SetAppAcceptingEvents(bool accepting)           { IO().SetAppAcceptingEvents(accepting); }
+void IGSharp_IO_ClearEventsQueue(void)                          { IO().ClearEventsQueue(); }
+void IGSharp_IO_ClearInputKeys(void)                            { IO().ClearInputKeys(); }
+void IGSharp_IO_ClearInputMouse(void)                           { IO().ClearInputMouse(); }
+
+#undef IO
+
+// --- Style: Scalar Fields ---
+
+#define S() ImGui::GetStyle()
+
+float IGSharp_Style_GetFontSizeBase(void)            { return S().FontSizeBase; }
+void  IGSharp_Style_SetFontSizeBase(float v)         { S().FontSizeBase = v; }
+float IGSharp_Style_GetFontScaleMain(void)           { return S().FontScaleMain; }
+void  IGSharp_Style_SetFontScaleMain(float v)        { S().FontScaleMain = v; }
+float IGSharp_Style_GetFontScaleDpi(void)            { return S().FontScaleDpi; }
+float IGSharp_Style_GetAlpha(void)                   { return S().Alpha; }
+void  IGSharp_Style_SetAlpha(float v)                { S().Alpha = v; }
+float IGSharp_Style_GetDisabledAlpha(void)           { return S().DisabledAlpha; }
+void  IGSharp_Style_SetDisabledAlpha(float v)        { S().DisabledAlpha = v; }
+float IGSharp_Style_GetWindowRounding(void)          { return S().WindowRounding; }
+void  IGSharp_Style_SetWindowRounding(float v)       { S().WindowRounding = v; }
+float IGSharp_Style_GetWindowBorderSize(void)        { return S().WindowBorderSize; }
+void  IGSharp_Style_SetWindowBorderSize(float v)     { S().WindowBorderSize = v; }
+float IGSharp_Style_GetChildRounding(void)           { return S().ChildRounding; }
+void  IGSharp_Style_SetChildRounding(float v)        { S().ChildRounding = v; }
+float IGSharp_Style_GetChildBorderSize(void)         { return S().ChildBorderSize; }
+void  IGSharp_Style_SetChildBorderSize(float v)      { S().ChildBorderSize = v; }
+float IGSharp_Style_GetPopupRounding(void)           { return S().PopupRounding; }
+void  IGSharp_Style_SetPopupRounding(float v)        { S().PopupRounding = v; }
+float IGSharp_Style_GetPopupBorderSize(void)         { return S().PopupBorderSize; }
+void  IGSharp_Style_SetPopupBorderSize(float v)      { S().PopupBorderSize = v; }
+float IGSharp_Style_GetFrameRounding(void)           { return S().FrameRounding; }
+void  IGSharp_Style_SetFrameRounding(float v)        { S().FrameRounding = v; }
+float IGSharp_Style_GetFrameBorderSize(void)         { return S().FrameBorderSize; }
+void  IGSharp_Style_SetFrameBorderSize(float v)      { S().FrameBorderSize = v; }
+float IGSharp_Style_GetIndentSpacing(void)           { return S().IndentSpacing; }
+void  IGSharp_Style_SetIndentSpacing(float v)        { S().IndentSpacing = v; }
+float IGSharp_Style_GetColumnsMinSpacing(void)       { return S().ColumnsMinSpacing; }
+void  IGSharp_Style_SetColumnsMinSpacing(float v)    { S().ColumnsMinSpacing = v; }
+float IGSharp_Style_GetScrollbarSize(void)           { return S().ScrollbarSize; }
+void  IGSharp_Style_SetScrollbarSize(float v)        { S().ScrollbarSize = v; }
+float IGSharp_Style_GetScrollbarRounding(void)       { return S().ScrollbarRounding; }
+void  IGSharp_Style_SetScrollbarRounding(float v)    { S().ScrollbarRounding = v; }
+float IGSharp_Style_GetGrabMinSize(void)             { return S().GrabMinSize; }
+void  IGSharp_Style_SetGrabMinSize(float v)          { S().GrabMinSize = v; }
+float IGSharp_Style_GetGrabRounding(void)            { return S().GrabRounding; }
+void  IGSharp_Style_SetGrabRounding(float v)         { S().GrabRounding = v; }
+float IGSharp_Style_GetImageRounding(void)           { return S().ImageRounding; }
+void  IGSharp_Style_SetImageRounding(float v)        { S().ImageRounding = v; }
+float IGSharp_Style_GetImageBorderSize(void)         { return S().ImageBorderSize; }
+void  IGSharp_Style_SetImageBorderSize(float v)      { S().ImageBorderSize = v; }
+float IGSharp_Style_GetTabRounding(void)             { return S().TabRounding; }
+void  IGSharp_Style_SetTabRounding(float v)          { S().TabRounding = v; }
+float IGSharp_Style_GetTabBorderSize(void)           { return S().TabBorderSize; }
+void  IGSharp_Style_SetTabBorderSize(float v)        { S().TabBorderSize = v; }
+float IGSharp_Style_GetMouseCursorScale(void)        { return S().MouseCursorScale; }
+void  IGSharp_Style_SetMouseCursorScale(float v)     { S().MouseCursorScale = v; }
+bool  IGSharp_Style_GetAntiAliasedLines(void)        { return S().AntiAliasedLines; }
+void  IGSharp_Style_SetAntiAliasedLines(bool v)      { S().AntiAliasedLines = v; }
+bool  IGSharp_Style_GetAntiAliasedFill(void)         { return S().AntiAliasedFill; }
+void  IGSharp_Style_SetAntiAliasedFill(bool v)       { S().AntiAliasedFill = v; }
+float IGSharp_Style_GetCurveTessellationTol(void)    { return S().CurveTessellationTol; }
+void  IGSharp_Style_SetCurveTessellationTol(float v) { S().CurveTessellationTol = v; }
+float IGSharp_Style_GetCircleTessellationMaxError(void)    { return S().CircleTessellationMaxError; }
+void  IGSharp_Style_SetCircleTessellationMaxError(float v) { S().CircleTessellationMaxError = v; }
+
+// --- Style: Vec2 Fields ---
+
+IGSharp_Vec2 IGSharp_Style_GetWindowPadding(void)             { return FromImVec2(S().WindowPadding); }
+void         IGSharp_Style_SetWindowPadding(IGSharp_Vec2 v)   { S().WindowPadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetWindowMinSize(void)             { return FromImVec2(S().WindowMinSize); }
+void         IGSharp_Style_SetWindowMinSize(IGSharp_Vec2 v)   { S().WindowMinSize = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetWindowTitleAlign(void)          { return FromImVec2(S().WindowTitleAlign); }
+void         IGSharp_Style_SetWindowTitleAlign(IGSharp_Vec2 v){ S().WindowTitleAlign = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetFramePadding(void)              { return FromImVec2(S().FramePadding); }
+void         IGSharp_Style_SetFramePadding(IGSharp_Vec2 v)    { S().FramePadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetItemSpacing(void)               { return FromImVec2(S().ItemSpacing); }
+void         IGSharp_Style_SetItemSpacing(IGSharp_Vec2 v)     { S().ItemSpacing = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetItemInnerSpacing(void)          { return FromImVec2(S().ItemInnerSpacing); }
+void         IGSharp_Style_SetItemInnerSpacing(IGSharp_Vec2 v){ S().ItemInnerSpacing = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetCellPadding(void)               { return FromImVec2(S().CellPadding); }
+void         IGSharp_Style_SetCellPadding(IGSharp_Vec2 v)     { S().CellPadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetTouchExtraPadding(void)         { return FromImVec2(S().TouchExtraPadding); }
+void         IGSharp_Style_SetTouchExtraPadding(IGSharp_Vec2 v)   { S().TouchExtraPadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetButtonTextAlign(void)           { return FromImVec2(S().ButtonTextAlign); }
+void         IGSharp_Style_SetButtonTextAlign(IGSharp_Vec2 v) { S().ButtonTextAlign = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetSelectableTextAlign(void)       { return FromImVec2(S().SelectableTextAlign); }
+void         IGSharp_Style_SetSelectableTextAlign(IGSharp_Vec2 v) { S().SelectableTextAlign = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetSeparatorTextAlign(void)        { return FromImVec2(S().SeparatorTextAlign); }
+void         IGSharp_Style_SetSeparatorTextAlign(IGSharp_Vec2 v)  { S().SeparatorTextAlign = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetSeparatorTextPadding(void)      { return FromImVec2(S().SeparatorTextPadding); }
+void         IGSharp_Style_SetSeparatorTextPadding(IGSharp_Vec2 v){ S().SeparatorTextPadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetDisplayWindowPadding(void)      { return FromImVec2(S().DisplayWindowPadding); }
+void         IGSharp_Style_SetDisplayWindowPadding(IGSharp_Vec2 v){ S().DisplayWindowPadding = ToImVec2(v); }
+IGSharp_Vec2 IGSharp_Style_GetDisplaySafeAreaPadding(void)    { return FromImVec2(S().DisplaySafeAreaPadding); }
+void         IGSharp_Style_SetDisplaySafeAreaPadding(IGSharp_Vec2 v) { S().DisplaySafeAreaPadding = ToImVec2(v); }
+
+// --- Style: Colors ---
+
+IGSharp_Vec4 IGSharp_Style_GetColor(int idx)
+{
+    if (idx < 0 || idx >= ImGuiCol_COUNT) return { 0, 0, 0, 0 };
+    ImVec4 c = S().Colors[idx];
+    return { c.x, c.y, c.z, c.w };
+}
+
+void IGSharp_Style_SetColor(int idx, IGSharp_Vec4 col)
+{
+    if (idx < 0 || idx >= ImGuiCol_COUNT) return;
+    S().Colors[idx] = ToImVec4(col);
+}
+
+#undef S

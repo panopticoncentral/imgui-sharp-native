@@ -353,10 +353,181 @@ IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGShar
 IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
 IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
 
-// --- Fonts (minimal) ---
+// --- Fonts: Atlas Loading ---
 IGSHARP_API void* IGSharp_IO_GetFonts(void);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromFileTTF(void* atlas, const char* filename, float size_pixels);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int font_data_size, float size_pixels, bool transfer_ownership);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels);
 IGSHARP_API bool  IGSharp_FontAtlas_Build(void* atlas);
+IGSHARP_API void  IGSharp_FontAtlas_Clear(void* atlas);
+IGSHARP_API void  IGSharp_FontAtlas_ClearFonts(void* atlas);
+IGSHARP_API int   IGSharp_FontAtlas_GetFontCount(void* atlas);
+IGSHARP_API void* IGSharp_FontAtlas_GetFont(void* atlas, int index);
+IGSHARP_API void  IGSharp_IO_SetFontDefault(void* font);
+IGSHARP_API void* IGSharp_IO_GetFontDefault(void);
+
+// --- Fonts: Push/Pop/Query ---
+IGSHARP_API void  IGSharp_PushFont(void* font, float font_size_base_unscaled);
+IGSHARP_API void  IGSharp_PopFont(void);
+IGSHARP_API void* IGSharp_GetFont(void);
+IGSHARP_API float IGSharp_GetFontSize(void);
+
+// --- ListClipper ---
+IGSHARP_API void* IGSharp_ListClipper_New(void);
+IGSHARP_API void  IGSharp_ListClipper_Delete(void* clipper);
+IGSHARP_API void  IGSharp_ListClipper_Begin(void* clipper, int items_count, float items_height);
+IGSHARP_API void  IGSharp_ListClipper_End(void* clipper);
+IGSHARP_API bool  IGSharp_ListClipper_Step(void* clipper);
+IGSHARP_API void  IGSharp_ListClipper_IncludeItemsByIndex(void* clipper, int item_begin, int item_end);
+IGSHARP_API void  IGSharp_ListClipper_SeekCursorForItem(void* clipper, int item_index);
+IGSHARP_API int   IGSharp_ListClipper_GetDisplayStart(void* clipper);
+IGSHARP_API int   IGSharp_ListClipper_GetDisplayEnd(void* clipper);
+
+// --- IO: Field Accessors (Read/Write) ---
+IGSHARP_API IGSharp_Vec2 IGSharp_IO_GetDisplaySize(void);
+IGSHARP_API void         IGSharp_IO_SetDisplaySize(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_IO_GetDisplayFramebufferScale(void);
+IGSHARP_API void         IGSharp_IO_SetDisplayFramebufferScale(IGSharp_Vec2 v);
+IGSHARP_API float        IGSharp_IO_GetDeltaTime(void);
+IGSHARP_API void         IGSharp_IO_SetDeltaTime(float v);
+IGSHARP_API IGSharp_Vec2 IGSharp_IO_GetMousePos(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_IO_GetMouseDelta(void);
+IGSHARP_API float        IGSharp_IO_GetMouseWheel(void);
+IGSHARP_API float        IGSharp_IO_GetMouseWheelH(void);
+IGSHARP_API bool         IGSharp_IO_GetKeyCtrl(void);
+IGSHARP_API bool         IGSharp_IO_GetKeyShift(void);
+IGSHARP_API bool         IGSharp_IO_GetKeyAlt(void);
+IGSHARP_API bool         IGSharp_IO_GetKeySuper(void);
+IGSHARP_API bool         IGSharp_IO_GetWantTextInput(void);
+IGSHARP_API bool         IGSharp_IO_GetWantSetMousePos(void);
+IGSHARP_API bool         IGSharp_IO_GetWantSaveIniSettings(void);
+IGSHARP_API void         IGSharp_IO_SetWantSaveIniSettings(bool v);
+IGSHARP_API bool         IGSharp_IO_GetNavActive(void);
+IGSHARP_API bool         IGSharp_IO_GetNavVisible(void);
+IGSHARP_API int          IGSharp_IO_GetMetricsRenderVertices(void);
+IGSHARP_API int          IGSharp_IO_GetMetricsRenderIndices(void);
+IGSHARP_API int          IGSharp_IO_GetMetricsRenderWindows(void);
+IGSHARP_API int          IGSharp_IO_GetMetricsActiveWindows(void);
+IGSHARP_API int          IGSharp_IO_GetBackendFlags(void);
+IGSHARP_API void         IGSharp_IO_SetBackendFlags(int v);
+IGSHARP_API float        IGSharp_IO_GetMouseDoubleClickTime(void);
+IGSHARP_API void         IGSharp_IO_SetMouseDoubleClickTime(float v);
+IGSHARP_API float        IGSharp_IO_GetMouseDoubleClickMaxDist(void);
+IGSHARP_API void         IGSharp_IO_SetMouseDoubleClickMaxDist(float v);
+IGSHARP_API float        IGSharp_IO_GetMouseDragThreshold(void);
+IGSHARP_API void         IGSharp_IO_SetMouseDragThreshold(float v);
+IGSHARP_API float        IGSharp_IO_GetKeyRepeatDelay(void);
+IGSHARP_API void         IGSharp_IO_SetKeyRepeatDelay(float v);
+IGSHARP_API float        IGSharp_IO_GetKeyRepeatRate(void);
+IGSHARP_API void         IGSharp_IO_SetKeyRepeatRate(float v);
+
+// --- IO: Event Queue ---
+IGSHARP_API void IGSharp_IO_AddKeyEvent(int key, bool down);
+IGSHARP_API void IGSharp_IO_AddKeyAnalogEvent(int key, bool down, float v);
+IGSHARP_API void IGSharp_IO_AddMousePosEvent(float x, float y);
+IGSHARP_API void IGSharp_IO_AddMouseButtonEvent(int button, bool down);
+IGSHARP_API void IGSharp_IO_AddMouseWheelEvent(float wheel_x, float wheel_y);
+IGSHARP_API void IGSharp_IO_AddMouseSourceEvent(int source);
+IGSHARP_API void IGSharp_IO_AddFocusEvent(bool focused);
+IGSHARP_API void IGSharp_IO_AddInputCharacter(unsigned int c);
+IGSHARP_API void IGSharp_IO_AddInputCharacterUTF16(unsigned short c);
+IGSHARP_API void IGSharp_IO_AddInputCharactersUTF8(const char* str);
+IGSHARP_API void IGSharp_IO_SetAppAcceptingEvents(bool accepting);
+IGSHARP_API void IGSharp_IO_ClearEventsQueue(void);
+IGSHARP_API void IGSharp_IO_ClearInputKeys(void);
+IGSHARP_API void IGSharp_IO_ClearInputMouse(void);
+
+// --- Style: Scalar Fields ---
+IGSHARP_API float IGSharp_Style_GetFontSizeBase(void);
+IGSHARP_API void  IGSharp_Style_SetFontSizeBase(float v);
+IGSHARP_API float IGSharp_Style_GetFontScaleMain(void);
+IGSHARP_API void  IGSharp_Style_SetFontScaleMain(float v);
+IGSHARP_API float IGSharp_Style_GetFontScaleDpi(void);
+IGSHARP_API float IGSharp_Style_GetAlpha(void);
+IGSHARP_API void  IGSharp_Style_SetAlpha(float v);
+IGSHARP_API float IGSharp_Style_GetDisabledAlpha(void);
+IGSHARP_API void  IGSharp_Style_SetDisabledAlpha(float v);
+IGSHARP_API float IGSharp_Style_GetWindowRounding(void);
+IGSHARP_API void  IGSharp_Style_SetWindowRounding(float v);
+IGSHARP_API float IGSharp_Style_GetWindowBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetWindowBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetChildRounding(void);
+IGSHARP_API void  IGSharp_Style_SetChildRounding(float v);
+IGSHARP_API float IGSharp_Style_GetChildBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetChildBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetPopupRounding(void);
+IGSHARP_API void  IGSharp_Style_SetPopupRounding(float v);
+IGSHARP_API float IGSharp_Style_GetPopupBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetPopupBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetFrameRounding(void);
+IGSHARP_API void  IGSharp_Style_SetFrameRounding(float v);
+IGSHARP_API float IGSharp_Style_GetFrameBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetFrameBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetIndentSpacing(void);
+IGSHARP_API void  IGSharp_Style_SetIndentSpacing(float v);
+IGSHARP_API float IGSharp_Style_GetColumnsMinSpacing(void);
+IGSHARP_API void  IGSharp_Style_SetColumnsMinSpacing(float v);
+IGSHARP_API float IGSharp_Style_GetScrollbarSize(void);
+IGSHARP_API void  IGSharp_Style_SetScrollbarSize(float v);
+IGSHARP_API float IGSharp_Style_GetScrollbarRounding(void);
+IGSHARP_API void  IGSharp_Style_SetScrollbarRounding(float v);
+IGSHARP_API float IGSharp_Style_GetGrabMinSize(void);
+IGSHARP_API void  IGSharp_Style_SetGrabMinSize(float v);
+IGSHARP_API float IGSharp_Style_GetGrabRounding(void);
+IGSHARP_API void  IGSharp_Style_SetGrabRounding(float v);
+IGSHARP_API float IGSharp_Style_GetImageRounding(void);
+IGSHARP_API void  IGSharp_Style_SetImageRounding(float v);
+IGSHARP_API float IGSharp_Style_GetImageBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetImageBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetTabRounding(void);
+IGSHARP_API void  IGSharp_Style_SetTabRounding(float v);
+IGSHARP_API float IGSharp_Style_GetTabBorderSize(void);
+IGSHARP_API void  IGSharp_Style_SetTabBorderSize(float v);
+IGSHARP_API float IGSharp_Style_GetMouseCursorScale(void);
+IGSHARP_API void  IGSharp_Style_SetMouseCursorScale(float v);
+IGSHARP_API bool  IGSharp_Style_GetAntiAliasedLines(void);
+IGSHARP_API void  IGSharp_Style_SetAntiAliasedLines(bool v);
+IGSHARP_API bool  IGSharp_Style_GetAntiAliasedFill(void);
+IGSHARP_API void  IGSharp_Style_SetAntiAliasedFill(bool v);
+IGSHARP_API float IGSharp_Style_GetCurveTessellationTol(void);
+IGSHARP_API void  IGSharp_Style_SetCurveTessellationTol(float v);
+IGSHARP_API float IGSharp_Style_GetCircleTessellationMaxError(void);
+IGSHARP_API void  IGSharp_Style_SetCircleTessellationMaxError(float v);
+
+// --- Style: Vec2 Fields ---
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetWindowPadding(void);
+IGSHARP_API void         IGSharp_Style_SetWindowPadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetWindowMinSize(void);
+IGSHARP_API void         IGSharp_Style_SetWindowMinSize(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetWindowTitleAlign(void);
+IGSHARP_API void         IGSharp_Style_SetWindowTitleAlign(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetFramePadding(void);
+IGSHARP_API void         IGSharp_Style_SetFramePadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetItemSpacing(void);
+IGSHARP_API void         IGSharp_Style_SetItemSpacing(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetItemInnerSpacing(void);
+IGSHARP_API void         IGSharp_Style_SetItemInnerSpacing(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetCellPadding(void);
+IGSHARP_API void         IGSharp_Style_SetCellPadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetTouchExtraPadding(void);
+IGSHARP_API void         IGSharp_Style_SetTouchExtraPadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetButtonTextAlign(void);
+IGSHARP_API void         IGSharp_Style_SetButtonTextAlign(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetSelectableTextAlign(void);
+IGSHARP_API void         IGSharp_Style_SetSelectableTextAlign(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetSeparatorTextAlign(void);
+IGSHARP_API void         IGSharp_Style_SetSeparatorTextAlign(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetSeparatorTextPadding(void);
+IGSHARP_API void         IGSharp_Style_SetSeparatorTextPadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetDisplayWindowPadding(void);
+IGSHARP_API void         IGSharp_Style_SetDisplayWindowPadding(IGSharp_Vec2 v);
+IGSHARP_API IGSharp_Vec2 IGSharp_Style_GetDisplaySafeAreaPadding(void);
+IGSHARP_API void         IGSharp_Style_SetDisplaySafeAreaPadding(IGSharp_Vec2 v);
+
+// --- Style: Colors ---
+IGSHARP_API IGSharp_Vec4 IGSharp_Style_GetColor(int idx);
+IGSHARP_API void         IGSharp_Style_SetColor(int idx, IGSharp_Vec4 col);
 
 // --- Backend: SDL3 Platform ---
 struct SDL_Window;

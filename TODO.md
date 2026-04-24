@@ -6,9 +6,13 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 ## Done ✅
 
 - CMake build system (imgui core + SDL3 backends + C wrapper → single shared lib)
-- Core widget subset (~270 exported functions)
+- Core widget subset (~430 exported functions)
 - DrawList API (primitives, path builder, images, clipping)
 - Misc utilities (CalcTextSize, GetColorU32, ColorConvert*, key/mouse queries, viewport)
+- Font loading (TTF from file, memory, compressed memory; PushFont/PopFont; font default)
+- ListClipper (virtualized large lists)
+- Full ImGuiIO field access (display/delta/mouse/keys/metrics + event queue)
+- Full ImGuiStyle field access (all spacing/rounding/alignment/color fields)
 - SDL3 platform backend wrapper
 - SDL_GPU renderer backend wrapper
 - Self-contained source tree (ImGui as `third_party/imgui` git submodule; SDL3 fetched by scripts)
@@ -28,10 +32,6 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 - [ ] InputText with callback (function pointer + void* userdata passthrough)
 - [ ] Drag and drop (BeginDragDropSource/Target, SetDragDropPayload, AcceptDragDropPayload)
 - [ ] Multi-select (BeginMultiSelect/EndMultiSelect, ImGuiMultiSelectIO)
-- [ ] ListClipper (create, begin, step, end, destroy)
-- [ ] Font loading (AddFontFromFileTTF, AddFontFromMemoryTTF, font config)
-- [ ] Full IO struct access (individual getter/setter functions for display size, delta time, etc.)
-- [ ] Style struct access (getter/setter for all ImGuiStyle fields)
 - [ ] Plot widgets (PlotLines, PlotHistogram — need array + callback variants)
 - [ ] Table sort specs (TableGetSortSpecs — needs struct marshalling)
 
