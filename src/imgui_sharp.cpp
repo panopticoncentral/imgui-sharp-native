@@ -428,6 +428,177 @@ IGSharp_Vec2 IGSharp_GetItemRectMax(void)       { return FromImVec2(ImGui::GetIt
 IGSharp_Vec2 IGSharp_GetItemRectSize(void)      { return FromImVec2(ImGui::GetItemRectSize()); }
 void IGSharp_SetItemDefaultFocus(void)          { ImGui::SetItemDefaultFocus(); }
 
+// --- Misc Utilities ---
+
+IGSharp_Vec2 IGSharp_CalcTextSize(const char* text, const char* text_end, bool hide_text_after_double_hash, float wrap_width)
+{ return FromImVec2(ImGui::CalcTextSize(text, text_end, hide_text_after_double_hash, wrap_width)); }
+
+unsigned int IGSharp_GetColorU32(int idx, float alpha_mul)        { return ImGui::GetColorU32((ImGuiCol)idx, alpha_mul); }
+unsigned int IGSharp_GetColorU32Vec4(IGSharp_Vec4 col)            { return ImGui::GetColorU32(ToImVec4(col)); }
+unsigned int IGSharp_GetColorU32Packed(unsigned int col, float a) { return ImGui::GetColorU32((ImU32)col, a); }
+
+IGSharp_Vec4 IGSharp_ColorConvertU32ToFloat4(unsigned int in)
+{
+    ImVec4 v = ImGui::ColorConvertU32ToFloat4((ImU32)in);
+    return { v.x, v.y, v.z, v.w };
+}
+unsigned int IGSharp_ColorConvertFloat4ToU32(IGSharp_Vec4 in)
+{ return ImGui::ColorConvertFloat4ToU32(ToImVec4(in)); }
+
+void IGSharp_ColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v)
+{ ImGui::ColorConvertRGBtoHSV(r, g, b, *out_h, *out_s, *out_v); }
+
+void IGSharp_ColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b)
+{ ImGui::ColorConvertHSVtoRGB(h, s, v, *out_r, *out_g, *out_b); }
+
+// --- Keyboard / Mouse Input ---
+
+bool IGSharp_IsKeyDown(int key)                          { return ImGui::IsKeyDown((ImGuiKey)key); }
+bool IGSharp_IsKeyPressed(int key, bool repeat)          { return ImGui::IsKeyPressed((ImGuiKey)key, repeat); }
+bool IGSharp_IsKeyReleased(int key)                      { return ImGui::IsKeyReleased((ImGuiKey)key); }
+bool IGSharp_IsKeyChordPressed(int key_chord)            { return ImGui::IsKeyChordPressed((ImGuiKeyChord)key_chord); }
+bool IGSharp_IsMouseDown(int button)                     { return ImGui::IsMouseDown(button); }
+bool IGSharp_IsMouseClicked(int button, bool repeat)     { return ImGui::IsMouseClicked(button, repeat); }
+bool IGSharp_IsMouseReleased(int button)                 { return ImGui::IsMouseReleased(button); }
+bool IGSharp_IsMouseDoubleClicked(int button)            { return ImGui::IsMouseDoubleClicked(button); }
+
+bool IGSharp_IsMouseHoveringRect(IGSharp_Vec2 r_min, IGSharp_Vec2 r_max, bool clip)
+{ return ImGui::IsMouseHoveringRect(ToImVec2(r_min), ToImVec2(r_max), clip); }
+
+bool IGSharp_IsMousePosValid(const IGSharp_Vec2* mouse_pos)
+{
+    if (mouse_pos == nullptr) return ImGui::IsMousePosValid();
+    ImVec2 tmp = ToImVec2(*mouse_pos);
+    return ImGui::IsMousePosValid(&tmp);
+}
+
+IGSharp_Vec2 IGSharp_GetMousePos(void)                   { return FromImVec2(ImGui::GetMousePos()); }
+bool IGSharp_IsMouseDragging(int button, float lock_threshold)
+{ return ImGui::IsMouseDragging(button, lock_threshold); }
+IGSharp_Vec2 IGSharp_GetMouseDragDelta(int button, float lock_threshold)
+{ return FromImVec2(ImGui::GetMouseDragDelta(button, lock_threshold)); }
+
+// --- Viewport ---
+
+void* IGSharp_GetMainViewport(void)                      { return ImGui::GetMainViewport(); }
+IGSharp_Vec2 IGSharp_Viewport_GetPos(void* viewport)     { return FromImVec2(((ImGuiViewport*)viewport)->Pos); }
+IGSharp_Vec2 IGSharp_Viewport_GetSize(void* viewport)    { return FromImVec2(((ImGuiViewport*)viewport)->Size); }
+IGSharp_Vec2 IGSharp_Viewport_GetWorkPos(void* viewport) { return FromImVec2(((ImGuiViewport*)viewport)->WorkPos); }
+IGSharp_Vec2 IGSharp_Viewport_GetWorkSize(void* viewport){ return FromImVec2(((ImGuiViewport*)viewport)->WorkSize); }
+
+// --- DrawList: Accessors ---
+
+void* IGSharp_GetWindowDrawList(void)                    { return ImGui::GetWindowDrawList(); }
+void* IGSharp_GetBackgroundDrawList(void)                { return ImGui::GetBackgroundDrawList(); }
+void* IGSharp_GetForegroundDrawList(void)                { return ImGui::GetForegroundDrawList(); }
+
+// --- DrawList: Clipping ---
+
+static inline ImDrawList* DL(void* p) { return (ImDrawList*)p; }
+
+void IGSharp_DrawList_PushClipRect(void* dl, IGSharp_Vec2 r_min, IGSharp_Vec2 r_max, bool intersect_with_current)
+{ DL(dl)->PushClipRect(ToImVec2(r_min), ToImVec2(r_max), intersect_with_current); }
+void IGSharp_DrawList_PushClipRectFullScreen(void* dl)   { DL(dl)->PushClipRectFullScreen(); }
+void IGSharp_DrawList_PopClipRect(void* dl)              { DL(dl)->PopClipRect(); }
+
+// --- DrawList: Primitives ---
+
+void IGSharp_DrawList_AddLine(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, unsigned int col, float thickness)
+{ DL(dl)->AddLine(ToImVec2(p1), ToImVec2(p2), col, thickness); }
+
+void IGSharp_DrawList_AddRect(void* dl, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags, float thickness)
+{ DL(dl)->AddRect(ToImVec2(p_min), ToImVec2(p_max), col, rounding, flags, thickness); }
+
+void IGSharp_DrawList_AddRectFilled(void* dl, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags)
+{ DL(dl)->AddRectFilled(ToImVec2(p_min), ToImVec2(p_max), col, rounding, flags); }
+
+void IGSharp_DrawList_AddRectFilledMultiColor(void* dl, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col_ul, unsigned int col_ur, unsigned int col_br, unsigned int col_bl)
+{ DL(dl)->AddRectFilledMultiColor(ToImVec2(p_min), ToImVec2(p_max), col_ul, col_ur, col_br, col_bl); }
+
+void IGSharp_DrawList_AddQuad(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness)
+{ DL(dl)->AddQuad(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), ToImVec2(p4), col, thickness); }
+
+void IGSharp_DrawList_AddQuadFilled(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col)
+{ DL(dl)->AddQuadFilled(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), ToImVec2(p4), col); }
+
+void IGSharp_DrawList_AddTriangle(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness)
+{ DL(dl)->AddTriangle(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), col, thickness); }
+
+void IGSharp_DrawList_AddTriangleFilled(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col)
+{ DL(dl)->AddTriangleFilled(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), col); }
+
+void IGSharp_DrawList_AddCircle(void* dl, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness)
+{ DL(dl)->AddCircle(ToImVec2(center), radius, col, num_segments, thickness); }
+
+void IGSharp_DrawList_AddCircleFilled(void* dl, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments)
+{ DL(dl)->AddCircleFilled(ToImVec2(center), radius, col, num_segments); }
+
+void IGSharp_DrawList_AddNgon(void* dl, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness)
+{ DL(dl)->AddNgon(ToImVec2(center), radius, col, num_segments, thickness); }
+
+void IGSharp_DrawList_AddNgonFilled(void* dl, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments)
+{ DL(dl)->AddNgonFilled(ToImVec2(center), radius, col, num_segments); }
+
+void IGSharp_DrawList_AddEllipse(void* dl, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments, float thickness)
+{ DL(dl)->AddEllipse(ToImVec2(center), ToImVec2(radius), col, rot, num_segments, thickness); }
+
+void IGSharp_DrawList_AddEllipseFilled(void* dl, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments)
+{ DL(dl)->AddEllipseFilled(ToImVec2(center), ToImVec2(radius), col, rot, num_segments); }
+
+void IGSharp_DrawList_AddText(void* dl, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end)
+{ DL(dl)->AddText(ToImVec2(pos), col, text_begin, text_end); }
+
+void IGSharp_DrawList_AddBezierCubic(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness, int num_segments)
+{ DL(dl)->AddBezierCubic(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), ToImVec2(p4), col, thickness, num_segments); }
+
+void IGSharp_DrawList_AddBezierQuadratic(void* dl, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness, int num_segments)
+{ DL(dl)->AddBezierQuadratic(ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), col, thickness, num_segments); }
+
+void IGSharp_DrawList_AddPolyline(void* dl, const IGSharp_Vec2* points, int num_points, unsigned int col, int flags, float thickness)
+{ DL(dl)->AddPolyline((const ImVec2*)points, num_points, col, flags, thickness); }
+
+void IGSharp_DrawList_AddConvexPolyFilled(void* dl, const IGSharp_Vec2* points, int num_points, unsigned int col)
+{ DL(dl)->AddConvexPolyFilled((const ImVec2*)points, num_points, col); }
+
+void IGSharp_DrawList_AddConcavePolyFilled(void* dl, const IGSharp_Vec2* points, int num_points, unsigned int col)
+{ DL(dl)->AddConcavePolyFilled((const ImVec2*)points, num_points, col); }
+
+// --- DrawList: Images ---
+
+void IGSharp_DrawList_AddImage(void* dl, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col)
+{ DL(dl)->AddImage((ImTextureID)tex_id, ToImVec2(p_min), ToImVec2(p_max), ToImVec2(uv_min), ToImVec2(uv_max), col); }
+
+void IGSharp_DrawList_AddImageQuad(void* dl, unsigned long long tex_id, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, IGSharp_Vec2 uv1, IGSharp_Vec2 uv2, IGSharp_Vec2 uv3, IGSharp_Vec2 uv4, unsigned int col)
+{ DL(dl)->AddImageQuad((ImTextureID)tex_id, ToImVec2(p1), ToImVec2(p2), ToImVec2(p3), ToImVec2(p4), ToImVec2(uv1), ToImVec2(uv2), ToImVec2(uv3), ToImVec2(uv4), col); }
+
+void IGSharp_DrawList_AddImageRounded(void* dl, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col, float rounding, int flags)
+{ DL(dl)->AddImageRounded((ImTextureID)tex_id, ToImVec2(p_min), ToImVec2(p_max), ToImVec2(uv_min), ToImVec2(uv_max), col, rounding, flags); }
+
+// --- DrawList: Path API ---
+
+void IGSharp_DrawList_PathClear(void* dl)                          { DL(dl)->PathClear(); }
+void IGSharp_DrawList_PathLineTo(void* dl, IGSharp_Vec2 pos)       { DL(dl)->PathLineTo(ToImVec2(pos)); }
+void IGSharp_DrawList_PathLineToMergeDuplicate(void* dl, IGSharp_Vec2 pos)
+{ DL(dl)->PathLineToMergeDuplicate(ToImVec2(pos)); }
+void IGSharp_DrawList_PathFillConvex(void* dl, unsigned int col)   { DL(dl)->PathFillConvex(col); }
+void IGSharp_DrawList_PathStroke(void* dl, unsigned int col, int flags, float thickness)
+{ DL(dl)->PathStroke(col, flags, thickness); }
+
+void IGSharp_DrawList_PathArcTo(void* dl, IGSharp_Vec2 center, float radius, float a_min, float a_max, int num_segments)
+{ DL(dl)->PathArcTo(ToImVec2(center), radius, a_min, a_max, num_segments); }
+
+void IGSharp_DrawList_PathArcToFast(void* dl, IGSharp_Vec2 center, float radius, int a_min_of_12, int a_max_of_12)
+{ DL(dl)->PathArcToFast(ToImVec2(center), radius, a_min_of_12, a_max_of_12); }
+
+void IGSharp_DrawList_PathBezierCubicCurveTo(void* dl, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, int num_segments)
+{ DL(dl)->PathBezierCubicCurveTo(ToImVec2(p2), ToImVec2(p3), ToImVec2(p4), num_segments); }
+
+void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* dl, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments)
+{ DL(dl)->PathBezierQuadraticCurveTo(ToImVec2(p2), ToImVec2(p3), num_segments); }
+
+void IGSharp_DrawList_PathRect(void* dl, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags)
+{ DL(dl)->PathRect(ToImVec2(rect_min), ToImVec2(rect_max), rounding, flags); }
+
 // --- Fonts (minimal) ---
 
 void* IGSharp_IO_GetFonts(void)                 { return ImGui::GetIO().Fonts; }

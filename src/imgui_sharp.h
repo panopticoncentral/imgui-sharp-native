@@ -272,6 +272,87 @@ IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectMax(void);
 IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectSize(void);
 IGSHARP_API void IGSharp_SetItemDefaultFocus(void);
 
+// --- Misc Utilities ---
+IGSHARP_API IGSharp_Vec2 IGSharp_CalcTextSize(const char* text, const char* text_end, bool hide_text_after_double_hash, float wrap_width);
+IGSHARP_API unsigned int IGSharp_GetColorU32(int idx, float alpha_mul);
+IGSHARP_API unsigned int IGSharp_GetColorU32Vec4(IGSharp_Vec4 col);
+IGSHARP_API unsigned int IGSharp_GetColorU32Packed(unsigned int col, float alpha_mul);
+IGSHARP_API IGSharp_Vec4 IGSharp_ColorConvertU32ToFloat4(unsigned int in);
+IGSHARP_API unsigned int IGSharp_ColorConvertFloat4ToU32(IGSharp_Vec4 in);
+IGSHARP_API void IGSharp_ColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v);
+IGSHARP_API void IGSharp_ColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b);
+
+// --- Keyboard / Mouse Input ---
+IGSHARP_API bool IGSharp_IsKeyDown(int key);
+IGSHARP_API bool IGSharp_IsKeyPressed(int key, bool repeat);
+IGSHARP_API bool IGSharp_IsKeyReleased(int key);
+IGSHARP_API bool IGSharp_IsKeyChordPressed(int key_chord);
+IGSHARP_API bool IGSharp_IsMouseDown(int button);
+IGSHARP_API bool IGSharp_IsMouseClicked(int button, bool repeat);
+IGSHARP_API bool IGSharp_IsMouseReleased(int button);
+IGSHARP_API bool IGSharp_IsMouseDoubleClicked(int button);
+IGSHARP_API bool IGSharp_IsMouseHoveringRect(IGSharp_Vec2 r_min, IGSharp_Vec2 r_max, bool clip);
+IGSHARP_API bool IGSharp_IsMousePosValid(const IGSharp_Vec2* mouse_pos);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetMousePos(void);
+IGSHARP_API bool IGSharp_IsMouseDragging(int button, float lock_threshold);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetMouseDragDelta(int button, float lock_threshold);
+
+// --- Viewport ---
+IGSHARP_API void* IGSharp_GetMainViewport(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetPos(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetSize(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkPos(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkSize(void* viewport);
+
+// --- DrawList: Accessors ---
+IGSHARP_API void* IGSharp_GetWindowDrawList(void);
+IGSHARP_API void* IGSharp_GetBackgroundDrawList(void);
+IGSHARP_API void* IGSharp_GetForegroundDrawList(void);
+
+// --- DrawList: Clipping ---
+IGSHARP_API void IGSharp_DrawList_PushClipRect(void* draw_list, IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current);
+IGSHARP_API void IGSharp_DrawList_PushClipRectFullScreen(void* draw_list);
+IGSHARP_API void IGSharp_DrawList_PopClipRect(void* draw_list);
+
+// --- DrawList: Primitives ---
+IGSHARP_API void IGSharp_DrawList_AddLine(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddRect(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddRectFilled(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags);
+IGSHARP_API void IGSharp_DrawList_AddRectFilledMultiColor(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col_ul, unsigned int col_ur, unsigned int col_br, unsigned int col_bl);
+IGSHARP_API void IGSharp_DrawList_AddQuad(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddQuadFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddTriangle(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddTriangleFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddCircle(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddCircleFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddNgon(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddNgonFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddEllipse(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddEllipseFilled(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddText(void* draw_list, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end);
+IGSHARP_API void IGSharp_DrawList_AddBezierCubic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddBezierQuadratic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddPolyline(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddConvexPolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddConcavePolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
+
+// --- DrawList: Images ---
+IGSHARP_API void IGSharp_DrawList_AddImage(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageQuad(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, IGSharp_Vec2 uv1, IGSharp_Vec2 uv2, IGSharp_Vec2 uv3, IGSharp_Vec2 uv4, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageRounded(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col, float rounding, int flags);
+
+// --- DrawList: Path API ---
+IGSHARP_API void IGSharp_DrawList_PathClear(void* draw_list);
+IGSHARP_API void IGSharp_DrawList_PathLineTo(void* draw_list, IGSharp_Vec2 pos);
+IGSHARP_API void IGSharp_DrawList_PathLineToMergeDuplicate(void* draw_list, IGSharp_Vec2 pos);
+IGSHARP_API void IGSharp_DrawList_PathFillConvex(void* draw_list, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_PathStroke(void* draw_list, unsigned int col, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_PathArcTo(void* draw_list, IGSharp_Vec2 center, float radius, float a_min, float a_max, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathArcToFast(void* draw_list, IGSharp_Vec2 center, float radius, int a_min_of_12, int a_max_of_12);
+IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
+
 // --- Fonts (minimal) ---
 IGSHARP_API void* IGSharp_IO_GetFonts(void);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas);
