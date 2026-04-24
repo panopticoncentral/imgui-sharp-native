@@ -311,6 +311,8 @@ bool  IGSharp_TreeNode(const char* label)       { return ImGui::TreeNode(label);
 bool  IGSharp_TreeNodeEx(const char* label, int flags) { return ImGui::TreeNodeEx(label, flags); }
 void  IGSharp_TreePop(void)                     { ImGui::TreePop(); }
 float IGSharp_GetTreeNodeToLabelSpacing(void)   { return ImGui::GetTreeNodeToLabelSpacing(); }
+bool IGSharp_TreeNodeGetOpen(unsigned int storage_id)
+{ return ImGui::TreeNodeGetOpen((ImGuiID)storage_id); }
 
 bool IGSharp_CollapsingHeader(const char* label, int flags)
 { return ImGui::CollapsingHeader(label, flags); }
@@ -910,6 +912,8 @@ float IGSharp_Style_GetTabRounding(void)             { return S().TabRounding; }
 void  IGSharp_Style_SetTabRounding(float v)          { S().TabRounding = v; }
 float IGSharp_Style_GetTabBorderSize(void)           { return S().TabBorderSize; }
 void  IGSharp_Style_SetTabBorderSize(float v)        { S().TabBorderSize = v; }
+float IGSharp_Style_GetSeparatorSize(void)           { return S().SeparatorSize; }
+void  IGSharp_Style_SetSeparatorSize(float v)        { S().SeparatorSize = v; }
 float IGSharp_Style_GetMouseCursorScale(void)        { return S().MouseCursorScale; }
 void  IGSharp_Style_SetMouseCursorScale(float v)     { S().MouseCursorScale = v; }
 bool  IGSharp_Style_GetAntiAliasedLines(void)        { return S().AntiAliasedLines; }
