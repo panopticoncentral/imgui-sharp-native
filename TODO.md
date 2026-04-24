@@ -24,13 +24,11 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 - CI/CD pipeline (GitHub Actions matrix for win-x64, win-x86, win-arm64, osx-x64, osx-arm64)
 - NuGet packaging as `ImguiSharp.Redist` (runtimes baked from CI artifacts)
 - Trusted-publishing release workflow (tag → nuget.org via OIDC)
+- CI green across win-x64/win-x86/win-arm64/osx-x64/osx-arm64; publish to nuget.org working
 
 ## TODO
 
 ### Cross-platform builds
-- [ ] Verify first CI run green on all 5 matrix legs (push to observe)
-- [ ] Register trusted publisher on nuget.org for this repo + `release.yml`
-- [ ] Cut `v0.1.0-preview.1` tag and verify nuget.org publish
 - [ ] Linux build support (requires building SDL3 from source — upstream ships no Linux binaries)
 
 ### Maintenance
