@@ -74,3 +74,32 @@ publisher on nuget.org.
 
 Pinned by the `third_party/imgui` submodule SHA. Bump by checking out a new
 tag inside the submodule and committing the updated pointer.
+
+## API coverage
+
+The wrapper exports ~500 `IGSharp_*` C functions covering the everyday
+widget surface (windows, layout, ID/style stacks, all widget families,
+popups, menus, tables, tabs), the DrawList API, fonts, ListClipper, full
+`ImGuiIO` / `ImGuiStyle` field access, InputText callbacks, plots, drag
+and drop, multi-select, and table sort specs. For a concrete list, see
+[`src/imgui_sharp.h`](src/imgui_sharp.h).
+
+### Intentionally skipped APIs
+
+If you're looking for an ImGui function and can't find it, it may be
+deliberately out of scope. The table below covers the categories — if
+something you need is in an "addable on request" row, file an issue.
+
+| Category | Examples | Reason | Addable? |
+|---|---|---|---|
+| Variadic / `V`-suffix overloads | `TextV`, `TextColoredV`, `BulletTextV`, `SeparatorTextV` | C# formats before calling `Text(...)` | No — format at call site |
+| Scalar generics | `DragScalar`, `SliderScalar`, `InputScalar`, `*N` variants | Covered by typed `DragInt/Float`, `SliderInt/Float`, `InputInt/Float` | No — use typed variants |
+| Columns (legacy) | `Columns`, `NextColumn`, `GetColumnIndex` | Superseded by Tables | No — use Tables |
+| Logging | `LogToTTY/File/Clipboard`, `LogText`, `LogFinish` | Niche feature | Yes |
+| Ini serialization | `LoadIniSettingsFromMemory`, `SaveIniSettingsToMemory`, disk variants | Rarely needed beyond the default | Yes |
+| Clipboard / IME overrides | `SetClipboardTextFn`, `SetPlatformImeDataFn` | Backends handle this | Yes |
+| Memory allocator overrides | `SetAllocatorFunctions` | Rare | Yes |
+| Debug / error recovery tools | `DebugTextEncoding`, `DebugFlashStyleColor`, `ErrorCheckEndFrameRecover` | Dev-only | Yes |
+| ImGui helper types | `ImGuiStorage`, `ImGuiTextFilter`, `ImGuiTextBuffer` | C# has equivalents | No — use .NET |
+| Font introspection | `ImFont::FindGlyph`, `CalcTextSizeA`, per-glyph APIs | `ImFont*` stays opaque | Partial (file issue) |
+| Multi-viewport / docking | `GetPlatformIO`, dock-builder APIs | We track the main branch, not docking | No (until upstream merges) |

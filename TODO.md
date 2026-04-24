@@ -33,4 +33,3 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 
 ### Maintenance
 - [ ] Track Dear ImGui version updates (currently pinned to v1.92.6 via submodule)
-- [ ] Document which ImGui APIs are intentionally skipped and why
