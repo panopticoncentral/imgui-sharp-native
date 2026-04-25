@@ -627,6 +627,74 @@ IGSHARP_API void         IGSharp_Style_SetDisplaySafeAreaPadding(IGSharp_Vec2 v)
 IGSHARP_API IGSharp_Vec4 IGSharp_Style_GetColor(int idx);
 IGSHARP_API void         IGSharp_Style_SetColor(int idx, IGSharp_Vec4 col);
 
+// --- Scrolling ---
+IGSHARP_API float IGSharp_GetScrollX(void);
+IGSHARP_API float IGSharp_GetScrollY(void);
+IGSHARP_API void  IGSharp_SetScrollX(float scroll_x);
+IGSHARP_API void  IGSharp_SetScrollY(float scroll_y);
+IGSHARP_API float IGSharp_GetScrollMaxX(void);
+IGSHARP_API float IGSharp_GetScrollMaxY(void);
+IGSHARP_API void  IGSharp_SetScrollHereX(float center_x_ratio);
+IGSHARP_API void  IGSharp_SetScrollHereY(float center_y_ratio);
+IGSHARP_API void  IGSharp_SetScrollFromPosX(float local_x, float center_x_ratio);
+IGSHARP_API void  IGSharp_SetScrollFromPosY(float local_y, float center_y_ratio);
+
+// --- Item Flags ---
+IGSHARP_API void IGSharp_PushItemFlag(int option, bool enabled);
+IGSHARP_API void IGSharp_PopItemFlag(void);
+
+// --- Focus / Activation ---
+IGSHARP_API void IGSharp_SetKeyboardFocusHere(int offset);
+IGSHARP_API void IGSharp_SetNextItemAllowOverlap(void);
+
+// --- Item Utilities (extra) ---
+IGSHARP_API unsigned int IGSharp_GetItemID(void);
+IGSHARP_API bool         IGSharp_IsAnyItemHovered(void);
+IGSHARP_API bool         IGSharp_IsAnyItemActive(void);
+IGSHARP_API bool         IGSharp_IsAnyItemFocused(void);
+
+// --- Mouse Cursor ---
+IGSHARP_API int  IGSharp_GetMouseCursor(void);
+IGSHARP_API void IGSharp_SetMouseCursor(int cursor_type);
+
+// --- Window Manipulation (extra) ---
+IGSHARP_API void IGSharp_SetNextWindowSizeConstraints(IGSharp_Vec2 size_min, IGSharp_Vec2 size_max);
+IGSHARP_API void IGSharp_SetNextWindowContentSize(IGSharp_Vec2 size);
+IGSHARP_API void IGSharp_SetNextWindowScroll(IGSharp_Vec2 scroll);
+
+// --- Tables (extra) ---
+IGSHARP_API void        IGSharp_TableSetBgColor(int target, unsigned int color, int column_n);
+IGSHARP_API int         IGSharp_TableGetColumnCount(void);
+IGSHARP_API int         IGSharp_TableGetColumnIndex(void);
+IGSHARP_API int         IGSharp_TableGetRowIndex(void);
+IGSHARP_API const char* IGSharp_TableGetColumnName(int column_n);
+IGSHARP_API int         IGSharp_TableGetColumnFlags(int column_n);
+IGSHARP_API void        IGSharp_TableSetColumnEnabled(int column_n, bool v);
+IGSHARP_API int         IGSharp_TableGetHoveredColumn(void);
+
+// --- Demo / Debug Windows (extra) ---
+IGSHARP_API void IGSharp_ShowDebugLogWindow(bool* p_open);
+IGSHARP_API void IGSharp_ShowIDStackToolWindow(bool* p_open);
+IGSHARP_API void IGSharp_ShowAboutWindow(bool* p_open);
+IGSHARP_API void IGSharp_ShowStyleEditor(void);
+IGSHARP_API bool IGSharp_ShowStyleSelector(const char* label);
+IGSHARP_API void IGSharp_ShowFontSelector(const char* label);
+IGSHARP_API void IGSharp_ShowUserGuide(void);
+
+// --- InputTextCallbackData: Resize Helpers ---
+IGSHARP_API void IGSharp_InputTextCallbackData_SetBuf(void* data, char* buf);
+IGSHARP_API void IGSharp_InputTextCallbackData_SetBufSize(void* data, int size);
+IGSHARP_API void IGSharp_InputTextCallbackData_ResizeBuf(void* data, char* new_buf, int new_buf_size);
+
+// --- Widgets: Scalar (generic) ---
+IGSHARP_API bool IGSharp_DragScalar(const char* label, int data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_DragScalarN(const char* label, int data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_SliderScalar(const char* label, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_SliderScalarN(const char* label, int data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_VSliderScalar(const char* label, IGSharp_Vec2 size, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_InputScalar(const char* label, int data_type, void* p_data, const void* p_step, const void* p_step_fast, const char* format, int flags);
+IGSHARP_API bool IGSharp_InputScalarN(const char* label, int data_type, void* p_data, int components, const void* p_step, const void* p_step_fast, const char* format, int flags);
+
 // --- Backend: SDL3 Platform ---
 struct SDL_Window;
 union SDL_Event;

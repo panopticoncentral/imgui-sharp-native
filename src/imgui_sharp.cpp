@@ -972,3 +972,108 @@ void IGSharp_Style_SetColor(int idx, IGSharp_Vec4 col)
 }
 
 #undef S
+
+// --- Scrolling ---
+
+float IGSharp_GetScrollX(void)                                  { return ImGui::GetScrollX(); }
+float IGSharp_GetScrollY(void)                                  { return ImGui::GetScrollY(); }
+void  IGSharp_SetScrollX(float scroll_x)                        { ImGui::SetScrollX(scroll_x); }
+void  IGSharp_SetScrollY(float scroll_y)                        { ImGui::SetScrollY(scroll_y); }
+float IGSharp_GetScrollMaxX(void)                               { return ImGui::GetScrollMaxX(); }
+float IGSharp_GetScrollMaxY(void)                               { return ImGui::GetScrollMaxY(); }
+void  IGSharp_SetScrollHereX(float center_x_ratio)              { ImGui::SetScrollHereX(center_x_ratio); }
+void  IGSharp_SetScrollHereY(float center_y_ratio)              { ImGui::SetScrollHereY(center_y_ratio); }
+void  IGSharp_SetScrollFromPosX(float local_x, float ratio)     { ImGui::SetScrollFromPosX(local_x, ratio); }
+void  IGSharp_SetScrollFromPosY(float local_y, float ratio)     { ImGui::SetScrollFromPosY(local_y, ratio); }
+
+// --- Item Flags ---
+
+void IGSharp_PushItemFlag(int option, bool enabled)             { ImGui::PushItemFlag((ImGuiItemFlags)option, enabled); }
+void IGSharp_PopItemFlag(void)                                  { ImGui::PopItemFlag(); }
+
+// --- Focus / Activation ---
+
+void IGSharp_SetKeyboardFocusHere(int offset)                   { ImGui::SetKeyboardFocusHere(offset); }
+void IGSharp_SetNextItemAllowOverlap(void)                      { ImGui::SetNextItemAllowOverlap(); }
+
+// --- Item Utilities (extra) ---
+
+unsigned int IGSharp_GetItemID(void)                            { return ImGui::GetItemID(); }
+bool         IGSharp_IsAnyItemHovered(void)                     { return ImGui::IsAnyItemHovered(); }
+bool         IGSharp_IsAnyItemActive(void)                      { return ImGui::IsAnyItemActive(); }
+bool         IGSharp_IsAnyItemFocused(void)                     { return ImGui::IsAnyItemFocused(); }
+
+// --- Mouse Cursor ---
+
+int  IGSharp_GetMouseCursor(void)                               { return (int)ImGui::GetMouseCursor(); }
+void IGSharp_SetMouseCursor(int cursor_type)                    { ImGui::SetMouseCursor((ImGuiMouseCursor)cursor_type); }
+
+// --- Window Manipulation (extra) ---
+
+void IGSharp_SetNextWindowSizeConstraints(IGSharp_Vec2 size_min, IGSharp_Vec2 size_max)
+{ ImGui::SetNextWindowSizeConstraints(ToImVec2(size_min), ToImVec2(size_max)); }
+
+void IGSharp_SetNextWindowContentSize(IGSharp_Vec2 size)        { ImGui::SetNextWindowContentSize(ToImVec2(size)); }
+void IGSharp_SetNextWindowScroll(IGSharp_Vec2 scroll)           { ImGui::SetNextWindowScroll(ToImVec2(scroll)); }
+
+// --- Tables (extra) ---
+
+void IGSharp_TableSetBgColor(int target, unsigned int color, int column_n)
+{ ImGui::TableSetBgColor((ImGuiTableBgTarget)target, (ImU32)color, column_n); }
+
+int         IGSharp_TableGetColumnCount(void)                   { return ImGui::TableGetColumnCount(); }
+int         IGSharp_TableGetColumnIndex(void)                   { return ImGui::TableGetColumnIndex(); }
+int         IGSharp_TableGetRowIndex(void)                      { return ImGui::TableGetRowIndex(); }
+const char* IGSharp_TableGetColumnName(int column_n)            { return ImGui::TableGetColumnName(column_n); }
+int         IGSharp_TableGetColumnFlags(int column_n)           { return (int)ImGui::TableGetColumnFlags(column_n); }
+void        IGSharp_TableSetColumnEnabled(int column_n, bool v) { ImGui::TableSetColumnEnabled(column_n, v); }
+int         IGSharp_TableGetHoveredColumn(void)                 { return ImGui::TableGetHoveredColumn(); }
+
+// --- Demo / Debug Windows (extra) ---
+
+void IGSharp_ShowDebugLogWindow(bool* p_open)                   { ImGui::ShowDebugLogWindow(p_open); }
+void IGSharp_ShowIDStackToolWindow(bool* p_open)                { ImGui::ShowIDStackToolWindow(p_open); }
+void IGSharp_ShowAboutWindow(bool* p_open)                      { ImGui::ShowAboutWindow(p_open); }
+void IGSharp_ShowStyleEditor(void)                              { ImGui::ShowStyleEditor(); }
+bool IGSharp_ShowStyleSelector(const char* label)               { return ImGui::ShowStyleSelector(label); }
+void IGSharp_ShowFontSelector(const char* label)                { ImGui::ShowFontSelector(label); }
+void IGSharp_ShowUserGuide(void)                                { ImGui::ShowUserGuide(); }
+
+// --- InputTextCallbackData: Resize Helpers ---
+
+void IGSharp_InputTextCallbackData_SetBuf(void* d, char* buf)
+{ ((ImGuiInputTextCallbackData*)d)->Buf = buf; }
+
+void IGSharp_InputTextCallbackData_SetBufSize(void* d, int size)
+{ ((ImGuiInputTextCallbackData*)d)->BufSize = size; }
+
+void IGSharp_InputTextCallbackData_ResizeBuf(void* d, char* new_buf, int new_buf_size)
+{
+    ImGuiInputTextCallbackData* data = (ImGuiInputTextCallbackData*)d;
+    data->Buf = new_buf;
+    data->BufSize = new_buf_size;
+    data->BufDirty = true;
+}
+
+// --- Widgets: Scalar (generic) ---
+
+bool IGSharp_DragScalar(const char* label, int data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, int flags)
+{ return ImGui::DragScalar(label, (ImGuiDataType)data_type, p_data, v_speed, p_min, p_max, format, flags); }
+
+bool IGSharp_DragScalarN(const char* label, int data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, int flags)
+{ return ImGui::DragScalarN(label, (ImGuiDataType)data_type, p_data, components, v_speed, p_min, p_max, format, flags); }
+
+bool IGSharp_SliderScalar(const char* label, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags)
+{ return ImGui::SliderScalar(label, (ImGuiDataType)data_type, p_data, p_min, p_max, format, flags); }
+
+bool IGSharp_SliderScalarN(const char* label, int data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format, int flags)
+{ return ImGui::SliderScalarN(label, (ImGuiDataType)data_type, p_data, components, p_min, p_max, format, flags); }
+
+bool IGSharp_VSliderScalar(const char* label, IGSharp_Vec2 size, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags)
+{ return ImGui::VSliderScalar(label, ToImVec2(size), (ImGuiDataType)data_type, p_data, p_min, p_max, format, flags); }
+
+bool IGSharp_InputScalar(const char* label, int data_type, void* p_data, const void* p_step, const void* p_step_fast, const char* format, int flags)
+{ return ImGui::InputScalar(label, (ImGuiDataType)data_type, p_data, p_step, p_step_fast, format, flags); }
+
+bool IGSharp_InputScalarN(const char* label, int data_type, void* p_data, int components, const void* p_step, const void* p_step_fast, const char* format, int flags)
+{ return ImGui::InputScalarN(label, (ImGuiDataType)data_type, p_data, components, p_step, p_step_fast, format, flags); }

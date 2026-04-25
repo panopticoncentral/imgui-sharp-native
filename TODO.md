@@ -33,3 +33,36 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 
 ### Maintenance
 - [ ] Track Dear ImGui version updates (currently pinned to v1.92.6 via submodule)
+
+### Requested from C# consumer (`sdl-sharp/SdlSharp.ImGui`)
+
+Wrapper exports that the managed side needs to finish closing specific API gaps.
+Each unblocks a corresponding feature that is currently stubbed or deferred.
+
+- [x] **`ImGuiInputTextCallbackData` buffer mutation** — `_SetBuf`, `_SetBufSize`, and
+  `_ResizeBuf(void*, char*, int)` helper. Unblocks unbounded managed-string `InputText`
+  via `ImGuiInputTextFlags_CallbackResize`.
+- [x] **`TableSetBgColor`** — exported as `IGSharp_TableSetBgColor(int target, unsigned int color, int column_n)`.
+- [x] **Mouse cursor get/set** — `IGSharp_GetMouseCursor` and `IGSharp_SetMouseCursor`.
+- [x] **Extra demo/debug windows** — `ShowDebugLogWindow`, `ShowIDStackToolWindow`,
+  `ShowAboutWindow`, `ShowStyleEditor` (no-arg), `ShowStyleSelector`, `ShowFontSelector`,
+  `ShowUserGuide`.
+- [x] **`PushItemFlag` / `PopItemFlag`** — exported.
+- [x] **Scalar widget variants** — `DragScalar{N}`, `SliderScalar{N}`, `InputScalar{N}`,
+  `VSliderScalar`. The `ImGuiDataType` enum can be enumerated on the C# side.
+- [x] **Item utilities** — `GetItemID`, `IsAnyItemHovered/Active/Focused`.
+- [x] **Table column metadata** — `TableGetColumnCount`, `TableGetColumnIndex`,
+  `TableGetRowIndex`, `TableGetColumnName`, `TableGetColumnFlags`, `TableSetColumnEnabled`,
+  `TableGetHoveredColumn`.
+- [x] **Scroll API** — `GetScrollX/Y`, `SetScrollX/Y`, `GetScrollMaxX/Y`,
+  `SetScrollHereX/Y`, `SetScrollFromPosX/Y`.
+- [x] **Focus / activation helpers** — `SetKeyboardFocusHere`, `SetNextItemAllowOverlap`.
+- [x] **`SetNextWindowSizeConstraints` / `SetNextWindowContentSize` / `SetNextWindowScroll`**
+  — exported (size-constraints variant takes min/max only; programmatic callback form
+  not exposed).
+
+Resolved without an export change:
+
+- **`GetCurrentContext` / `SetCurrentContext(NULL)`** — passing `NULL` to
+  `IGSharp_SetCurrentContext` is supported (it just clears the implicit `GImGui` pointer);
+  no UB. Safe for managed code to detach contexts temporarily.
