@@ -124,12 +124,17 @@ can be cut by pushing a `v*` release tag.
 
 ## API coverage
 
-The wrapper exports ~500 `IGSharp_*` C functions covering the everyday
+The wrapper exports ~370 `IGSharp_*` C functions covering the everyday
 widget surface (windows, layout, ID/style stacks, all widget families,
-popups, menus, tables, tabs), the DrawList API, fonts, ListClipper, full
-`ImGuiIO` / `ImGuiStyle` field access, InputText callbacks, plots, drag
-and drop, multi-select, and table sort specs. For a concrete list, see
-[`src/imgui_sharp.h`](src/imgui_sharp.h).
+popups, menus, tables, tabs), the DrawList API, fonts, ListClipper,
+InputText callbacks, plots, drag and drop, multi-select, and table sort
+specs. For a concrete list, see [`src/imgui_sharp.h`](src/imgui_sharp.h).
+
+`ImGuiIO` and `ImGuiStyle` are exposed as layout-compatible C structs
+(`IGSharp_IO`, `IGSharp_Style`) — call `IGSharp_GetIO()` /
+`IGSharp_GetStyle()` to obtain a pointer and read or write fields
+directly. Layout match with upstream is enforced at compile time by
+the asserts in `src/imgui_sharp_layout_check.cpp`.
 
 ### Intentionally skipped APIs
 

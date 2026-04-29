@@ -46,6 +46,7 @@ set(IMGUI_BACKEND_SOURCES
 set(WRAPPER_SOURCES
     src/imgui_sharp.cpp
     src/imgui_sharp_backend.cpp
+    src/imgui_sharp_layout_check.cpp
 )
 
 add_library(imgui_sharp SHARED
