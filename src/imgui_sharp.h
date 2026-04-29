@@ -1,4 +1,10 @@
+// dear imgui sharp
+
 #pragma once
+
+//-----------------------------------------------------------------------------
+// [SECTION] Header mess
+//-----------------------------------------------------------------------------
 
 #include <stddef.h>
 
@@ -17,24 +23,58 @@
     #endif
 #endif
 
-// Types - layout-compatible with ImVec2/ImVec4
-typedef struct { float x, y; } IGSharp_Vec2;
-typedef struct { float x, y, z, w; } IGSharp_Vec4;
+IGSHARP_API void IGSharp_CheckVersion(void);
+
+//-----------------------------------------------------------------------------
+// [SECTION] Forward declarations and basic types
+//-----------------------------------------------------------------------------
 
 // Opaque types
 typedef struct ImGuiContext ImGuiContext;
 
-// --- Context & Lifecycle ---
-IGSHARP_API ImGuiContext* IGSharp_CreateContext(void);
+typedef struct {
+    float x, y;
+} IGSharp_Vec2;
+
+typedef struct { 
+    float x, y, z, w; 
+} IGSharp_Vec4;
+
+//-----------------------------------------------------------------------------
+// [SECTION] Texture identifiers (ImTextureID, ImTextureRef)
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// [SECTION] Dear ImGui end-user API functions
+// (Note that ImGui:: being a namespace, you can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
+//-----------------------------------------------------------------------------
+
+// Context creation and access
+IGSHARP_API ImGuiContext* IGSharp_CreateContext(void); // MISSING: ImFontAtlas
 IGSHARP_API void          IGSharp_DestroyContext(ImGuiContext* ctx);
 IGSHARP_API ImGuiContext* IGSharp_GetCurrentContext(void);
 IGSHARP_API void          IGSharp_SetCurrentContext(ImGuiContext* ctx);
-IGSHARP_API void          IGSharp_NewFrame(void);
-IGSHARP_API void          IGSharp_Render(void);
-IGSHARP_API void          IGSharp_EndFrame(void);
-IGSHARP_API void*         IGSharp_GetDrawData(void);
-IGSHARP_API const char*   IGSharp_GetVersion(void);
-IGSHARP_API void          IGSharp_CheckVersion(void);
+
+// Main
+// MISSING: GetIO
+// MISSING: GetPlatformIO
+// MISSING: GetStyle
+IGSHARP_API void  IGSharp_NewFrame(void);
+IGSHARP_API void  IGSharp_EndFrame(void);
+IGSHARP_API void  IGSharp_Render(void);
+IGSHARP_API void* IGSharp_GetDrawData(void);
+
+// Demo, Debug, Information
+IGSHARP_API void        IGSharp_ShowDemoWindow(bool* p_open);
+IGSHARP_API void        IGSharp_ShowMetricsWindow(bool* p_open);
+IGSHARP_API void        IGSharp_ShowDebugLogWindow(bool* p_open);
+IGSHARP_API void        IGSharp_ShowIDStackToolWindow(bool* p_open);
+IGSHARP_API void        IGSharp_ShowAboutWindow(bool* p_open);
+IGSHARP_API void        IGSharp_ShowStyleEditor(void); // MISSING: ImGuiStyle
+IGSHARP_API bool        IGSharp_ShowStyleSelector(const char* label);
+IGSHARP_API void        IGSharp_ShowFontSelector(const char* label);
+IGSHARP_API void        IGSharp_ShowUserGuide(void);
+IGSHARP_API const char* IGSharp_GetVersion(void);
 
 // --- IO Accessors ---
 IGSHARP_API bool IGSharp_IO_GetWantCaptureMouse(void);
@@ -45,8 +85,6 @@ IGSHARP_API void IGSharp_IO_SetIniFilename(const char* filename);
 IGSHARP_API float IGSharp_IO_GetFramerate(void);
 
 // --- Demo / Styles ---
-IGSHARP_API void IGSharp_ShowDemoWindow(bool* p_open);
-IGSHARP_API void IGSharp_ShowMetricsWindow(bool* p_open);
 IGSHARP_API void IGSharp_StyleColorsDark(void);
 IGSHARP_API void IGSharp_StyleColorsLight(void);
 IGSHARP_API void IGSharp_StyleColorsClassic(void);
@@ -671,15 +709,6 @@ IGSHARP_API const char* IGSharp_TableGetColumnName(int column_n);
 IGSHARP_API int         IGSharp_TableGetColumnFlags(int column_n);
 IGSHARP_API void        IGSharp_TableSetColumnEnabled(int column_n, bool v);
 IGSHARP_API int         IGSharp_TableGetHoveredColumn(void);
-
-// --- Demo / Debug Windows (extra) ---
-IGSHARP_API void IGSharp_ShowDebugLogWindow(bool* p_open);
-IGSHARP_API void IGSharp_ShowIDStackToolWindow(bool* p_open);
-IGSHARP_API void IGSharp_ShowAboutWindow(bool* p_open);
-IGSHARP_API void IGSharp_ShowStyleEditor(void);
-IGSHARP_API bool IGSharp_ShowStyleSelector(const char* label);
-IGSHARP_API void IGSharp_ShowFontSelector(const char* label);
-IGSHARP_API void IGSharp_ShowUserGuide(void);
 
 // --- InputTextCallbackData: Resize Helpers ---
 IGSHARP_API void IGSharp_InputTextCallbackData_SetBuf(void* data, char* buf);
