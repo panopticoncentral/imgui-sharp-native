@@ -1,10 +1,10 @@
-#include "imgui_sharp.h"
+#include "imgui_sharp_backend.h"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlgpu3.h"
 #include <SDL3/SDL_gpu.h>
 
-// --- Backend: SDL3 Platform ---
+// SDL3 Platform
 
 bool IGSharp_ImplSDL3_InitForSDLGPU(SDL_Window* window)
 { return ImGui_ImplSDL3_InitForSDLGPU(window); }
@@ -18,7 +18,7 @@ void IGSharp_ImplSDL3_NewFrame(void)
 bool IGSharp_ImplSDL3_ProcessEvent(const SDL_Event* event)
 { return ImGui_ImplSDL3_ProcessEvent(event); }
 
-// --- Backend: SDL_GPU Renderer ---
+// SDL_GPU Renderer
 
 bool IGSharp_ImplSDLGPU3_Init(SDL_GPUDevice* device, int color_target_format, int msaa_samples)
 {
