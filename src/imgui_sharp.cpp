@@ -8,10 +8,10 @@ static inline IGSharp_Vec2 FromImVec2(ImVec2 v) { return { v.x, v.y }; }
 
 // --- Context & Lifecycle ---
 
-ImGuiContext* IGSharp_CreateContext(void)       { return ImGui::CreateContext(); }
-void          IGSharp_DestroyContext(ImGuiContext* ctx) { ImGui::DestroyContext(ctx); }
-ImGuiContext* IGSharp_GetCurrentContext(void)   { return ImGui::GetCurrentContext(); }
-void          IGSharp_SetCurrentContext(ImGuiContext* ctx) { ImGui::SetCurrentContext(ctx); }
+IGSharp_Context* IGSharp_CreateContext(void)       { return reinterpret_cast<IGSharp_Context*>(ImGui::CreateContext()); }
+void             IGSharp_DestroyContext(IGSharp_Context* ctx) { ImGui::DestroyContext(reinterpret_cast<ImGuiContext*>(ctx)); }
+IGSharp_Context* IGSharp_GetCurrentContext(void)   { return reinterpret_cast<IGSharp_Context*>(ImGui::GetCurrentContext()); }
+void             IGSharp_SetCurrentContext(IGSharp_Context* ctx) { ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext*>(ctx)); }
 void          IGSharp_NewFrame(void)            { ImGui::NewFrame(); }
 void          IGSharp_Render(void)              { ImGui::Render(); }
 void          IGSharp_EndFrame(void)            { ImGui::EndFrame(); }

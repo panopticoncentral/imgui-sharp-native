@@ -32,11 +32,8 @@ IGSHARP_API void IGSharp_CheckVersion(void);
 // [SECTION] Forward declarations and basic types
 //-----------------------------------------------------------------------------
 
-// Opaque types
-typedef struct ImGuiContext ImGuiContext;
-
-// Forward typedefs — full definitions appear later in the ImGuiIO and
-// ImGuiStyle sections.
+// Forward declarations: ImGui layer
+typedef struct IGSharp_Context IGSharp_Context;
 typedef struct IGSharp_IO    IGSharp_IO;
 typedef struct IGSharp_Style IGSharp_Style;
 
@@ -72,10 +69,10 @@ typedef struct {
 //-----------------------------------------------------------------------------
 
 // Context creation and access
-IGSHARP_API ImGuiContext* IGSharp_CreateContext(void); // MISSING: ImFontAtlas
-IGSHARP_API void          IGSharp_DestroyContext(ImGuiContext* ctx);
-IGSHARP_API ImGuiContext* IGSharp_GetCurrentContext(void);
-IGSHARP_API void          IGSharp_SetCurrentContext(ImGuiContext* ctx);
+IGSHARP_API IGSharp_Context* IGSharp_CreateContext(void); // MISSING: ImFontAtlas
+IGSHARP_API void             IGSharp_DestroyContext(IGSharp_Context* ctx);
+IGSHARP_API IGSharp_Context* IGSharp_GetCurrentContext(void);
+IGSHARP_API void             IGSharp_SetCurrentContext(IGSharp_Context* ctx);
 
 // Main
 IGSHARP_API IGSharp_IO*    IGSharp_GetIO(void);
@@ -859,7 +856,7 @@ typedef struct IGSharp_IO {
     IGSharp_Vec2   MouseDelta;
 
     // [Internal] Maintained by Dear ImGui — forward compatibility not guaranteed.
-    ImGuiContext*    Ctx;
+    IGSharp_Context* Ctx;
     IGSharp_Vec2     MousePos;
     bool             MouseDown[5];
     float            MouseWheel;
