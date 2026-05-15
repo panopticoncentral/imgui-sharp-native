@@ -107,9 +107,6 @@ KEY_VAL(MouseLeft); KEY_VAL(MouseRight); KEY_VAL(MouseMiddle); KEY_VAL(MouseX1);
 KEY_VAL(ReservedForModCtrl); KEY_VAL(ReservedForModShift); KEY_VAL(ReservedForModAlt); KEY_VAL(ReservedForModSuper);
 KEY_VAL(NamedKey_END);
 KEY_VAL(NamedKey_COUNT);
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-KEY_VAL(COUNT);
-#endif
 #undef KEY_VAL
 
 #define MOD_VAL(F) static_assert((int)IGSharp_Mod_##F == (int)ImGuiMod_##F, "IGSharp_Mod_" #F " value drift")
@@ -119,9 +116,6 @@ MOD_VAL(Shift);
 MOD_VAL(Alt);
 MOD_VAL(Super);
 MOD_VAL(Mask_);
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-MOD_VAL(Shortcut);
-#endif
 #undef MOD_VAL
 
 #define COL_VAL(F) static_assert((int)IGSharp_Col_##F == (int)ImGuiCol_##F, "IGSharp_Col_" #F " value drift")
@@ -186,12 +180,6 @@ COL_VAL(NavWindowingHighlight);
 COL_VAL(NavWindowingDimBg);
 COL_VAL(ModalWindowDimBg);
 COL_VAL(COUNT);
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-COL_VAL(TabActive);
-COL_VAL(TabUnfocused);
-COL_VAL(TabUnfocusedActive);
-COL_VAL(NavHighlight);
-#endif
 #undef COL_VAL
 
 // --- IGSharp_KeyData -------------------------------------------------------
@@ -344,16 +332,6 @@ static_assert(offsetof(IGSharp_IO, InputQueueCharacters_Capacity) ==
 static_assert(offsetof(IGSharp_IO, InputQueueCharacters_Data) ==
               offsetof(ImGuiIO,    InputQueueCharacters) + 2 * sizeof(int),
               "IGSharp_IO.InputQueueCharacters_Data offset");
-
-// Obsolete tail — these only exist when IMGUI_DISABLE_OBSOLETE_FUNCTIONS is
-// not defined (the default for our build). If a future config flips that,
-// the size assert at the top will catch the drift.
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-static_assert(offsetof(IGSharp_IO, FontGlobalScale)    == offsetof(ImGuiIO, FontGlobalScale),    "IGSharp_IO.FontGlobalScale");
-static_assert(offsetof(IGSharp_IO, GetClipboardTextFn) == offsetof(ImGuiIO, GetClipboardTextFn), "IGSharp_IO.GetClipboardTextFn");
-static_assert(offsetof(IGSharp_IO, SetClipboardTextFn) == offsetof(ImGuiIO, SetClipboardTextFn), "IGSharp_IO.SetClipboardTextFn");
-static_assert(offsetof(IGSharp_IO, ClipboardUserData)  == offsetof(ImGuiIO, ClipboardUserData),  "IGSharp_IO.ClipboardUserData");
-#endif
 
 // --- IGSharp_Style ---------------------------------------------------------
 

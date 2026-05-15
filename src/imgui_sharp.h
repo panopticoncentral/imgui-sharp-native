@@ -38,8 +38,6 @@ typedef struct IGSharp_IO    IGSharp_IO;
 typedef struct IGSharp_Style IGSharp_Style;
 
 // Callback typedefs
-typedef const char* (*IGSharp_GetClipboardTextFn)(void* user_data);
-typedef void        (*IGSharp_SetClipboardTextFn)(void* user_data, const char* text);
 typedef int         (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
 typedef float       (*IGSharp_PlotValuesGetter)(void* data, int idx);
 
@@ -222,7 +220,7 @@ IGSHARP_API bool IGSharp_TextLink(const char* label);
 IGSHARP_API void IGSharp_TextLinkOpenURL(const char* label, const char* url);
 
 // Widgets: Images
-IGSHARP_API void IGSharp_Image(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 tint_col, IGSharp_Vec4 border_col);
+IGSHARP_API void IGSharp_ImageWithBg(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
 IGSHARP_API bool IGSharp_ImageButton(const char* str_id, unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
 
 // Widgets: Combo Box (Dropdown)
@@ -557,11 +555,6 @@ typedef enum {
     IGSharp_Mod_Alt   = 1 << 14,
     IGSharp_Mod_Super = 1 << 15,
     IGSharp_Mod_Mask_ = 0xF000,
-
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    IGSharp_Key_COUNT     = IGSharp_Key_NamedKey_END,
-    IGSharp_Mod_Shortcut  = IGSharp_Mod_Ctrl,
-#endif
 } IGSharp_Key;
 
 typedef enum {
@@ -626,13 +619,6 @@ typedef enum {
     IGSharp_Col_NavWindowingDimBg,
     IGSharp_Col_ModalWindowDimBg,
     IGSharp_Col_COUNT,
-
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    IGSharp_Col_TabActive          = IGSharp_Col_TabSelected,
-    IGSharp_Col_TabUnfocused       = IGSharp_Col_TabDimmed,
-    IGSharp_Col_TabUnfocusedActive = IGSharp_Col_TabDimmedSelected,
-    IGSharp_Col_NavHighlight       = IGSharp_Col_NavCursor,
-#endif
 } IGSharp_Col;
 
 //-----------------------------------------------------------------------------
@@ -895,13 +881,6 @@ typedef struct IGSharp_IO {
     int              InputQueueCharacters_Size;
     int              InputQueueCharacters_Capacity;
     unsigned short*  InputQueueCharacters_Data;
-
-    // Obsolete tail — present unless the upstream build defines IMGUI_DISABLE_OBSOLETE_FUNCTIONS.
-    // Layout assertion in imgui_sharp_layout_check.cpp catches drift if that macro changes.
-    float                       FontGlobalScale;
-    IGSharp_GetClipboardTextFn  GetClipboardTextFn;
-    IGSharp_SetClipboardTextFn  SetClipboardTextFn;
-    void*                       ClipboardUserData;
 } IGSharp_IO;
 
 // Wrap ImGuiIO's C++ member functions; pass the IGSharp_IO* you got from IGSharp_GetIO().
@@ -1048,7 +1027,6 @@ IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontFromFileTTF(void* atlas, const char* filename, float size_pixels);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int font_data_size, float size_pixels, bool transfer_ownership);
 IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels);
-IGSHARP_API bool  IGSharp_FontAtlas_Build(void* atlas);
 IGSHARP_API void  IGSharp_FontAtlas_Clear(void* atlas);
 IGSHARP_API void  IGSharp_FontAtlas_ClearFonts(void* atlas);
 IGSHARP_API int   IGSharp_FontAtlas_GetFontCount(void* atlas);

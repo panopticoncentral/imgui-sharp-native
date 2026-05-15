@@ -178,8 +178,8 @@ void IGSharp_TextLinkOpenURL(const char* label, const char* url)
 
 // --- Widgets: Images ---
 
-void IGSharp_Image(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 tint_col, IGSharp_Vec4 border_col)
-{ ImGui::Image((ImTextureID)tex_id, ToImVec2(image_size), ToImVec2(uv0), ToImVec2(uv1), ToImVec4(tint_col), ToImVec4(border_col)); }
+void IGSharp_ImageWithBg(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col)
+{ ImGui::ImageWithBg((ImTextureID)tex_id, ToImVec2(image_size), ToImVec2(uv0), ToImVec2(uv1), ToImVec4(bg_col), ToImVec4(tint_col)); }
 
 bool IGSharp_ImageButton(const char* str_id, unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col)
 { return ImGui::ImageButton(str_id, (ImTextureID)tex_id, ToImVec2(image_size), ToImVec2(uv0), ToImVec2(uv1), ToImVec4(bg_col), ToImVec4(tint_col)); }
@@ -755,7 +755,6 @@ void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int f
 void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels)
 { return ((ImFontAtlas*)atlas)->AddFontFromMemoryCompressedTTF(compressed_data, compressed_size, size_pixels); }
 
-bool IGSharp_FontAtlas_Build(void* atlas)       { return ((ImFontAtlas*)atlas)->Build(); }
 void IGSharp_FontAtlas_Clear(void* atlas)       { ((ImFontAtlas*)atlas)->Clear(); }
 void IGSharp_FontAtlas_ClearFonts(void* atlas)  { ((ImFontAtlas*)atlas)->ClearFonts(); }
 int  IGSharp_FontAtlas_GetFontCount(void* atlas){ return ((ImFontAtlas*)atlas)->Fonts.Size; }

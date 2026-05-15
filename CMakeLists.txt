@@ -63,7 +63,10 @@ target_include_directories(imgui_sharp PRIVATE
 target_link_libraries(imgui_sharp PRIVATE SDL3::SDL3)
 
 # Export visibility
-target_compile_definitions(imgui_sharp PRIVATE IMGUI_SHARP_EXPORT)
+target_compile_definitions(imgui_sharp PRIVATE
+    IMGUI_SHARP_EXPORT
+    IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+)
 
 # Hide all symbols by default, only export our C wrapper functions
 if(NOT MSVC)
