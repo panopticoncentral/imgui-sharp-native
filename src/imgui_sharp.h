@@ -39,7 +39,6 @@ typedef struct IGSharp_Style IGSharp_Style;
 
 // Callback typedefs
 typedef int         (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
-typedef float       (*IGSharp_PlotValuesGetter)(void* data, int idx);
 
 typedef struct {
     float x, y;
@@ -305,9 +304,9 @@ IGSHARP_API void IGSharp_EndListBox(void);
 
 // Widgets: Data Plotting
 IGSHARP_API void IGSharp_PlotLines(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
-IGSHARP_API void IGSharp_PlotLinesCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
+IGSHARP_API void IGSharp_PlotLinesCallback(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
 IGSHARP_API void IGSharp_PlotHistogram(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
-IGSHARP_API void IGSharp_PlotHistogramCallback(const char* label, IGSharp_PlotValuesGetter values_getter, void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
+IGSHARP_API void IGSharp_PlotHistogramCallback(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
 
 // Widgets: Menus
 IGSHARP_API bool IGSharp_BeginMenuBar(void);
