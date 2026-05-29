@@ -6,7 +6,14 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 ## Done ✅
 
 - CMake build system (imgui core + SDL3 backends + C wrapper → single shared lib)
-- Core widget subset (~370 exported functions)
+- Full master-branch public API coverage (~825 exported functions) — the
+  everyday widget surface plus all previously-skipped categories: logging,
+  ini settings serialization, clipboard/IME/allocator override setters,
+  debug and error-recovery tools, font introspection, and the
+  `ImGuiStorage` / `ImGuiTextFilter` / `ImGuiTextBuffer` helpers. Only
+  variadic/`V`-suffix overloads and docking/multi-viewport remain out of
+  scope. NOTE: the C# consumer (`SdlSharp.ImGui`) must add matching
+  `[StructLayout]` mirrors and P/Invoke declarations for this new surface.
 - DrawList API (primitives, path builder, images, clipping)
 - Misc utilities (CalcTextSize, GetColorU32, ColorConvert*, key/mouse queries, viewport)
 - Font loading (TTF from file, memory, compressed memory; PushFont/PopFont; font default)

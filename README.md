@@ -124,11 +124,16 @@ can be cut by pushing a `v*` release tag.
 
 ## API coverage
 
-The wrapper exports ~370 `IGSharp_*` C functions covering the everyday
-widget surface (windows, layout, ID/style stacks, all widget families,
-popups, menus, tables, tabs), the DrawList API, fonts, ListClipper,
-InputText callbacks, plots, drag and drop, multi-select, and table sort
-specs. For a concrete list, see [`src/imgui_sharp.h`](src/imgui_sharp.h).
+The wrapper exports ~825 `IGSharp_*` C functions covering essentially the
+entire master-branch public API: the everyday widget surface (windows,
+layout, ID/style stacks, all widget families, popups, menus, tables, tabs),
+the DrawList API, fonts and font introspection, ListClipper, InputText
+callbacks, plots, drag and drop, multi-select, table sort specs, logging,
+ini settings serialization, clipboard/IME/allocator override setters,
+debug and error-recovery tools, and the `ImGuiStorage` / `ImGuiTextFilter`
+/ `ImGuiTextBuffer` helpers. The only public APIs not wrapped are
+variadic/`V`-suffix overloads and docking/multi-viewport (see below). For
+a concrete list, see [`src/imgui_sharp.h`](src/imgui_sharp.h).
 
 `ImGuiIO` and `ImGuiStyle` are exposed as layout-compatible C structs
 (`IGSharp_IO`, `IGSharp_Style`) — call `IGSharp_GetIO()` /
@@ -138,20 +143,10 @@ the asserts in `src/imgui_sharp_layout_check.cpp`.
 
 ### Intentionally skipped APIs
 
-If you're looking for an ImGui function and can't find it, it may be
-deliberately out of scope. The table below covers the categories — if
-something you need is in an "addable on request" row, file an issue.
+Coverage is otherwise complete; only two categories are deliberately out
+of scope.
 
 | Category | Examples | Reason | Addable? |
 |---|---|---|---|
-| Variadic / `V`-suffix overloads | `TextV`, `TextColoredV`, `BulletTextV`, `SeparatorTextV` | C# formats before calling `Text(...)` | No — format at call site |
-| Scalar generics | `DragScalar`, `SliderScalar`, `InputScalar`, `*N` variants | Covered by typed `DragInt/Float`, `SliderInt/Float`, `InputInt/Float` | No — use typed variants |
-| Columns (legacy) | `Columns`, `NextColumn`, `GetColumnIndex` | Superseded by Tables | No — use Tables |
-| Logging | `LogToTTY/File/Clipboard`, `LogText`, `LogFinish` | Niche feature | Yes |
-| Ini serialization | `LoadIniSettingsFromMemory`, `SaveIniSettingsToMemory`, disk variants | Rarely needed beyond the default | Yes |
-| Clipboard / IME overrides | `SetClipboardTextFn`, `SetPlatformImeDataFn` | Backends handle this | Yes |
-| Memory allocator overrides | `SetAllocatorFunctions` | Rare | Yes |
-| Debug / error recovery tools | `DebugTextEncoding`, `DebugFlashStyleColor`, `ErrorCheckEndFrameRecover` | Dev-only | Yes |
-| ImGui helper types | `ImGuiStorage`, `ImGuiTextFilter`, `ImGuiTextBuffer` | C# has equivalents | No — use .NET |
-| Font introspection | `ImFont::FindGlyph`, `CalcTextSizeA`, per-glyph APIs | `ImFont*` stays opaque | Partial (file issue) |
-| Multi-viewport / docking | `GetPlatformIO`, dock-builder APIs | We track the main branch, not docking | No (until upstream merges) |
+| Variadic / `V`-suffix overloads | `TextV`, `TextColoredV`, `BulletTextV`, `SeparatorTextV` | The typed/non-variadic form is enough — C# formats at the call site before calling `Text(...)` | No — format at call site |
+| Docking / multi-viewport | `DockSpace`, `DockBuilder*`, `ImGuiDockNode`, viewport-as-OS-window, the platform/renderer callback table | Not on the master branch we track, and our SDL3 + SDL_GPU backends are single-viewport | No (until upstream merges to master) |

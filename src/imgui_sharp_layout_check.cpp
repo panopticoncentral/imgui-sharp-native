@@ -415,6 +415,648 @@ ST_OFFSET(_NextFrameFontSizeBase);
 
 #undef ST_OFFSET
 
+#define WINDOWFLAGS_VAL(F) static_assert((int)IGSharp_WindowFlags_##F == (int)ImGuiWindowFlags_##F, "IGSharp_WindowFlags_" #F " value drift")
+WINDOWFLAGS_VAL(None);
+WINDOWFLAGS_VAL(NoTitleBar);
+WINDOWFLAGS_VAL(NoResize);
+WINDOWFLAGS_VAL(NoMove);
+WINDOWFLAGS_VAL(NoScrollbar);
+WINDOWFLAGS_VAL(NoScrollWithMouse);
+WINDOWFLAGS_VAL(NoCollapse);
+WINDOWFLAGS_VAL(AlwaysAutoResize);
+WINDOWFLAGS_VAL(NoBackground);
+WINDOWFLAGS_VAL(NoSavedSettings);
+WINDOWFLAGS_VAL(NoMouseInputs);
+WINDOWFLAGS_VAL(MenuBar);
+WINDOWFLAGS_VAL(HorizontalScrollbar);
+WINDOWFLAGS_VAL(NoFocusOnAppearing);
+WINDOWFLAGS_VAL(NoBringToFrontOnFocus);
+WINDOWFLAGS_VAL(AlwaysVerticalScrollbar);
+WINDOWFLAGS_VAL(AlwaysHorizontalScrollbar);
+WINDOWFLAGS_VAL(NoNavInputs);
+WINDOWFLAGS_VAL(NoNavFocus);
+WINDOWFLAGS_VAL(UnsavedDocument);
+WINDOWFLAGS_VAL(NoNav);
+WINDOWFLAGS_VAL(NoDecoration);
+WINDOWFLAGS_VAL(NoInputs);
+WINDOWFLAGS_VAL(ChildWindow);
+WINDOWFLAGS_VAL(Tooltip);
+WINDOWFLAGS_VAL(Popup);
+WINDOWFLAGS_VAL(Modal);
+WINDOWFLAGS_VAL(ChildMenu);
+#undef WINDOWFLAGS_VAL
+
+#define CHILDFLAGS_VAL(F) static_assert((int)IGSharp_ChildFlags_##F == (int)ImGuiChildFlags_##F, "IGSharp_ChildFlags_" #F " value drift")
+CHILDFLAGS_VAL(None);
+CHILDFLAGS_VAL(Borders);
+CHILDFLAGS_VAL(AlwaysUseWindowPadding);
+CHILDFLAGS_VAL(ResizeX);
+CHILDFLAGS_VAL(ResizeY);
+CHILDFLAGS_VAL(AutoResizeX);
+CHILDFLAGS_VAL(AutoResizeY);
+CHILDFLAGS_VAL(AlwaysAutoResize);
+CHILDFLAGS_VAL(FrameStyle);
+CHILDFLAGS_VAL(NavFlattened);
+#undef CHILDFLAGS_VAL
+
+#define ITEMFLAGS_VAL(F) static_assert((int)IGSharp_ItemFlags_##F == (int)ImGuiItemFlags_##F, "IGSharp_ItemFlags_" #F " value drift")
+ITEMFLAGS_VAL(None);
+ITEMFLAGS_VAL(NoTabStop);
+ITEMFLAGS_VAL(NoNav);
+ITEMFLAGS_VAL(NoNavDefaultFocus);
+ITEMFLAGS_VAL(ButtonRepeat);
+ITEMFLAGS_VAL(AutoClosePopups);
+ITEMFLAGS_VAL(AllowDuplicateId);
+ITEMFLAGS_VAL(Disabled);
+#undef ITEMFLAGS_VAL
+
+#define ITF_VAL(F) static_assert((int)IGSharp_InputTextFlags_##F == (int)ImGuiInputTextFlags_##F, "IGSharp_InputTextFlags_" #F " value drift")
+ITF_VAL(None);
+ITF_VAL(CharsDecimal);
+ITF_VAL(CharsHexadecimal);
+ITF_VAL(CharsScientific);
+ITF_VAL(CharsUppercase);
+ITF_VAL(CharsNoBlank);
+ITF_VAL(AllowTabInput);
+ITF_VAL(EnterReturnsTrue);
+ITF_VAL(EscapeClearsAll);
+ITF_VAL(CtrlEnterForNewLine);
+ITF_VAL(ReadOnly);
+ITF_VAL(Password);
+ITF_VAL(AlwaysOverwrite);
+ITF_VAL(AutoSelectAll);
+ITF_VAL(ParseEmptyRefVal);
+ITF_VAL(DisplayEmptyRefVal);
+ITF_VAL(NoHorizontalScroll);
+ITF_VAL(NoUndoRedo);
+ITF_VAL(ElideLeft);
+ITF_VAL(CallbackCompletion);
+ITF_VAL(CallbackHistory);
+ITF_VAL(CallbackAlways);
+ITF_VAL(CallbackCharFilter);
+ITF_VAL(CallbackResize);
+ITF_VAL(CallbackEdit);
+ITF_VAL(WordWrap);
+#undef ITF_VAL
+
+#define POPUPFLAGS_VAL(F) static_assert((int)IGSharp_PopupFlags_##F == (int)ImGuiPopupFlags_##F, "IGSharp_PopupFlags_" #F " value drift")
+POPUPFLAGS_VAL(None);
+POPUPFLAGS_VAL(MouseButtonLeft);
+POPUPFLAGS_VAL(MouseButtonRight);
+POPUPFLAGS_VAL(MouseButtonMiddle);
+POPUPFLAGS_VAL(NoReopen);
+POPUPFLAGS_VAL(NoOpenOverExistingPopup);
+POPUPFLAGS_VAL(NoOpenOverItems);
+POPUPFLAGS_VAL(AnyPopupId);
+POPUPFLAGS_VAL(AnyPopupLevel);
+POPUPFLAGS_VAL(AnyPopup);
+POPUPFLAGS_VAL(MouseButtonShift_);
+POPUPFLAGS_VAL(MouseButtonMask_);
+POPUPFLAGS_VAL(InvalidMask_);
+#undef POPUPFLAGS_VAL
+
+#define COMBOFLAGS_VAL(F) static_assert((int)IGSharp_ComboFlags_##F == (int)ImGuiComboFlags_##F, "IGSharp_ComboFlags_" #F " value drift")
+COMBOFLAGS_VAL(None);
+COMBOFLAGS_VAL(PopupAlignLeft);
+COMBOFLAGS_VAL(HeightSmall);
+COMBOFLAGS_VAL(HeightRegular);
+COMBOFLAGS_VAL(HeightLarge);
+COMBOFLAGS_VAL(HeightLargest);
+COMBOFLAGS_VAL(NoArrowButton);
+COMBOFLAGS_VAL(NoPreview);
+COMBOFLAGS_VAL(WidthFitPreview);
+COMBOFLAGS_VAL(HeightMask_);
+#undef COMBOFLAGS_VAL
+
+#define TABBARFLAGS_VAL(F) static_assert((int)IGSharp_TabBarFlags_##F == (int)ImGuiTabBarFlags_##F, "IGSharp_TabBarFlags_" #F " value drift")
+TABBARFLAGS_VAL(None);
+TABBARFLAGS_VAL(Reorderable);
+TABBARFLAGS_VAL(AutoSelectNewTabs);
+TABBARFLAGS_VAL(TabListPopupButton);
+TABBARFLAGS_VAL(NoCloseWithMiddleMouseButton);
+TABBARFLAGS_VAL(NoTabListScrollingButtons);
+TABBARFLAGS_VAL(NoTooltip);
+TABBARFLAGS_VAL(DrawSelectedOverline);
+TABBARFLAGS_VAL(FittingPolicyMixed);
+TABBARFLAGS_VAL(FittingPolicyShrink);
+TABBARFLAGS_VAL(FittingPolicyScroll);
+TABBARFLAGS_VAL(FittingPolicyMask_);
+TABBARFLAGS_VAL(FittingPolicyDefault_);
+#undef TABBARFLAGS_VAL
+
+#define TABITEMFLAGS_VAL(F) static_assert((int)IGSharp_TabItemFlags_##F == (int)ImGuiTabItemFlags_##F, "IGSharp_TabItemFlags_" #F " value drift")
+TABITEMFLAGS_VAL(None);
+TABITEMFLAGS_VAL(UnsavedDocument);
+TABITEMFLAGS_VAL(SetSelected);
+TABITEMFLAGS_VAL(NoCloseWithMiddleMouseButton);
+TABITEMFLAGS_VAL(NoPushId);
+TABITEMFLAGS_VAL(NoTooltip);
+TABITEMFLAGS_VAL(NoReorder);
+TABITEMFLAGS_VAL(Leading);
+TABITEMFLAGS_VAL(Trailing);
+TABITEMFLAGS_VAL(NoAssumedClosure);
+#undef TABITEMFLAGS_VAL
+
+// IGSharp_FocusedFlags mirrors ImGuiFocusedFlags_ 1:1. Per-value asserts.
+#define FOCUSEDFLAGS_VAL(F) static_assert((int)IGSharp_FocusedFlags_##F == (int)ImGuiFocusedFlags_##F, "IGSharp_FocusedFlags_" #F " value drift")
+FOCUSEDFLAGS_VAL(None);
+FOCUSEDFLAGS_VAL(ChildWindows);
+FOCUSEDFLAGS_VAL(RootWindow);
+FOCUSEDFLAGS_VAL(AnyWindow);
+FOCUSEDFLAGS_VAL(NoPopupHierarchy);
+FOCUSEDFLAGS_VAL(RootAndChildWindows);
+#undef FOCUSEDFLAGS_VAL
+
+#define HOVERED_VAL(F) static_assert((int)IGSharp_HoveredFlags_##F == (int)ImGuiHoveredFlags_##F, "IGSharp_HoveredFlags_" #F " value drift")
+HOVERED_VAL(None);
+HOVERED_VAL(ChildWindows);
+HOVERED_VAL(RootWindow);
+HOVERED_VAL(AnyWindow);
+HOVERED_VAL(NoPopupHierarchy);
+HOVERED_VAL(AllowWhenBlockedByPopup);
+HOVERED_VAL(AllowWhenBlockedByActiveItem);
+HOVERED_VAL(AllowWhenOverlappedByItem);
+HOVERED_VAL(AllowWhenOverlappedByWindow);
+HOVERED_VAL(AllowWhenDisabled);
+HOVERED_VAL(NoNavOverride);
+HOVERED_VAL(AllowWhenOverlapped);
+HOVERED_VAL(RectOnly);
+HOVERED_VAL(RootAndChildWindows);
+HOVERED_VAL(ForTooltip);
+HOVERED_VAL(Stationary);
+HOVERED_VAL(DelayNone);
+HOVERED_VAL(DelayShort);
+HOVERED_VAL(DelayNormal);
+HOVERED_VAL(NoSharedDelay);
+#undef HOVERED_VAL
+
+#define DRAGDROPFLAGS_VAL(F) static_assert((int)IGSharp_DragDropFlags_##F == (int)ImGuiDragDropFlags_##F, "IGSharp_DragDropFlags_" #F " value drift")
+DRAGDROPFLAGS_VAL(None);
+DRAGDROPFLAGS_VAL(SourceNoPreviewTooltip);
+DRAGDROPFLAGS_VAL(SourceNoDisableHover);
+DRAGDROPFLAGS_VAL(SourceNoHoldToOpenOthers);
+DRAGDROPFLAGS_VAL(SourceAllowNullID);
+DRAGDROPFLAGS_VAL(SourceExtern);
+DRAGDROPFLAGS_VAL(PayloadAutoExpire);
+DRAGDROPFLAGS_VAL(PayloadNoCrossContext);
+DRAGDROPFLAGS_VAL(PayloadNoCrossProcess);
+DRAGDROPFLAGS_VAL(AcceptBeforeDelivery);
+DRAGDROPFLAGS_VAL(AcceptNoDrawDefaultRect);
+DRAGDROPFLAGS_VAL(AcceptNoPreviewTooltip);
+DRAGDROPFLAGS_VAL(AcceptDrawAsHovered);
+DRAGDROPFLAGS_VAL(AcceptPeekOnly);
+#undef DRAGDROPFLAGS_VAL
+
+#define DATATYPE_VAL(F) static_assert((int)IGSharp_DataType_##F == (int)ImGuiDataType_##F, "IGSharp_DataType_" #F " value drift")
+DATATYPE_VAL(S8);
+DATATYPE_VAL(U8);
+DATATYPE_VAL(S16);
+DATATYPE_VAL(U16);
+DATATYPE_VAL(S32);
+DATATYPE_VAL(U32);
+DATATYPE_VAL(S64);
+DATATYPE_VAL(U64);
+DATATYPE_VAL(Float);
+DATATYPE_VAL(Double);
+DATATYPE_VAL(Bool);
+DATATYPE_VAL(String);
+DATATYPE_VAL(COUNT);
+#undef DATATYPE_VAL
+
+#define SORTDIR_VAL(F) static_assert((int)IGSharp_SortDirection_##F == (int)ImGuiSortDirection_##F, "IGSharp_SortDirection_" #F " value drift")
+SORTDIR_VAL(None);
+SORTDIR_VAL(Ascending);
+SORTDIR_VAL(Descending);
+#undef SORTDIR_VAL
+
+#define INPUTFLAGS_VAL(F) static_assert((int)IGSharp_InputFlags_##F == (int)ImGuiInputFlags_##F, "IGSharp_InputFlags_" #F " value drift")
+INPUTFLAGS_VAL(None);
+INPUTFLAGS_VAL(Repeat);
+INPUTFLAGS_VAL(RouteActive);
+INPUTFLAGS_VAL(RouteFocused);
+INPUTFLAGS_VAL(RouteGlobal);
+INPUTFLAGS_VAL(RouteAlways);
+INPUTFLAGS_VAL(RouteOverFocused);
+INPUTFLAGS_VAL(RouteOverActive);
+INPUTFLAGS_VAL(RouteUnlessBgFocused);
+INPUTFLAGS_VAL(RouteFromRootWindow);
+INPUTFLAGS_VAL(Tooltip);
+#undef INPUTFLAGS_VAL
+
+#define CONFIGFLAGS_VAL(F) static_assert((int)IGSharp_ConfigFlags_##F == (int)ImGuiConfigFlags_##F, "IGSharp_ConfigFlags_" #F " value drift")
+CONFIGFLAGS_VAL(None);
+CONFIGFLAGS_VAL(NavEnableKeyboard);
+CONFIGFLAGS_VAL(NavEnableGamepad);
+CONFIGFLAGS_VAL(NoMouse);
+CONFIGFLAGS_VAL(NoMouseCursorChange);
+CONFIGFLAGS_VAL(NoKeyboard);
+CONFIGFLAGS_VAL(IsSRGB);
+CONFIGFLAGS_VAL(IsTouchScreen);
+#undef CONFIGFLAGS_VAL
+
+// ImGuiBackendFlags_ value drift checks
+#define BACKENDFLAGS_VAL(F) static_assert((int)IGSharp_BackendFlags_##F == (int)ImGuiBackendFlags_##F, "IGSharp_BackendFlags_" #F " value drift")
+BACKENDFLAGS_VAL(None);
+BACKENDFLAGS_VAL(HasGamepad);
+BACKENDFLAGS_VAL(HasMouseCursors);
+BACKENDFLAGS_VAL(HasSetMousePos);
+BACKENDFLAGS_VAL(RendererHasVtxOffset);
+BACKENDFLAGS_VAL(RendererHasTextures);
+#undef BACKENDFLAGS_VAL
+
+#define STYLEVAR_VAL(F) static_assert((int)IGSharp_StyleVar_##F == (int)ImGuiStyleVar_##F, "IGSharp_StyleVar_" #F " value drift")
+STYLEVAR_VAL(Alpha);
+STYLEVAR_VAL(DisabledAlpha);
+STYLEVAR_VAL(WindowPadding);
+STYLEVAR_VAL(WindowRounding);
+STYLEVAR_VAL(WindowBorderSize);
+STYLEVAR_VAL(WindowMinSize);
+STYLEVAR_VAL(WindowTitleAlign);
+STYLEVAR_VAL(ChildRounding);
+STYLEVAR_VAL(ChildBorderSize);
+STYLEVAR_VAL(PopupRounding);
+STYLEVAR_VAL(PopupBorderSize);
+STYLEVAR_VAL(FramePadding);
+STYLEVAR_VAL(FrameRounding);
+STYLEVAR_VAL(FrameBorderSize);
+STYLEVAR_VAL(ItemSpacing);
+STYLEVAR_VAL(ItemInnerSpacing);
+STYLEVAR_VAL(IndentSpacing);
+STYLEVAR_VAL(CellPadding);
+STYLEVAR_VAL(ScrollbarSize);
+STYLEVAR_VAL(ScrollbarRounding);
+STYLEVAR_VAL(ScrollbarPadding);
+STYLEVAR_VAL(GrabMinSize);
+STYLEVAR_VAL(GrabRounding);
+STYLEVAR_VAL(ImageRounding);
+STYLEVAR_VAL(ImageBorderSize);
+STYLEVAR_VAL(TabRounding);
+STYLEVAR_VAL(TabBorderSize);
+STYLEVAR_VAL(TabMinWidthBase);
+STYLEVAR_VAL(TabMinWidthShrink);
+STYLEVAR_VAL(TabBarBorderSize);
+STYLEVAR_VAL(TabBarOverlineSize);
+STYLEVAR_VAL(TableAngledHeadersAngle);
+STYLEVAR_VAL(TableAngledHeadersTextAlign);
+STYLEVAR_VAL(TreeLinesSize);
+STYLEVAR_VAL(TreeLinesRounding);
+STYLEVAR_VAL(ButtonTextAlign);
+STYLEVAR_VAL(SelectableTextAlign);
+STYLEVAR_VAL(SeparatorSize);
+STYLEVAR_VAL(SeparatorTextBorderSize);
+STYLEVAR_VAL(SeparatorTextAlign);
+STYLEVAR_VAL(SeparatorTextPadding);
+STYLEVAR_VAL(COUNT);
+#undef STYLEVAR_VAL
+
+#define CEF_VAL(F) static_assert((int)IGSharp_ColorEditFlags_##F == (int)ImGuiColorEditFlags_##F, "IGSharp_ColorEditFlags_" #F " value drift")
+CEF_VAL(None);
+CEF_VAL(NoAlpha);
+CEF_VAL(NoPicker);
+CEF_VAL(NoOptions);
+CEF_VAL(NoSmallPreview);
+CEF_VAL(NoInputs);
+CEF_VAL(NoTooltip);
+CEF_VAL(NoLabel);
+CEF_VAL(NoSidePreview);
+CEF_VAL(NoDragDrop);
+CEF_VAL(NoBorder);
+CEF_VAL(NoColorMarkers);
+CEF_VAL(AlphaOpaque);
+CEF_VAL(AlphaNoBg);
+CEF_VAL(AlphaPreviewHalf);
+CEF_VAL(AlphaBar);
+CEF_VAL(HDR);
+CEF_VAL(DisplayRGB);
+CEF_VAL(DisplayHSV);
+CEF_VAL(DisplayHex);
+CEF_VAL(Uint8);
+CEF_VAL(Float);
+CEF_VAL(PickerHueBar);
+CEF_VAL(PickerHueWheel);
+CEF_VAL(InputRGB);
+CEF_VAL(InputHSV);
+CEF_VAL(DefaultOptions_);
+CEF_VAL(AlphaMask_);
+CEF_VAL(DisplayMask_);
+CEF_VAL(DataTypeMask_);
+CEF_VAL(PickerMask_);
+CEF_VAL(InputMask_);
+#undef CEF_VAL
+
+#define SLIDERFLAGS_VAL(F) static_assert((int)IGSharp_SliderFlags_##F == (int)ImGuiSliderFlags_##F, "IGSharp_SliderFlags_" #F " value drift")
+SLIDERFLAGS_VAL(None);
+SLIDERFLAGS_VAL(Logarithmic);
+SLIDERFLAGS_VAL(NoRoundToFormat);
+SLIDERFLAGS_VAL(NoInput);
+SLIDERFLAGS_VAL(WrapAround);
+SLIDERFLAGS_VAL(ClampOnInput);
+SLIDERFLAGS_VAL(ClampZeroRange);
+SLIDERFLAGS_VAL(NoSpeedTweaks);
+SLIDERFLAGS_VAL(ColorMarkers);
+SLIDERFLAGS_VAL(AlwaysClamp);
+SLIDERFLAGS_VAL(InvalidMask_);
+#undef SLIDERFLAGS_VAL
+
+#define MOUSECURSOR_VAL(F) static_assert((int)IGSharp_MouseCursor_##F == (int)ImGuiMouseCursor_##F, "IGSharp_MouseCursor_" #F " value drift")
+MOUSECURSOR_VAL(None);
+MOUSECURSOR_VAL(Arrow);
+MOUSECURSOR_VAL(TextInput);
+MOUSECURSOR_VAL(ResizeAll);
+MOUSECURSOR_VAL(ResizeNS);
+MOUSECURSOR_VAL(ResizeEW);
+MOUSECURSOR_VAL(ResizeNESW);
+MOUSECURSOR_VAL(ResizeNWSE);
+MOUSECURSOR_VAL(Hand);
+MOUSECURSOR_VAL(Wait);
+MOUSECURSOR_VAL(Progress);
+MOUSECURSOR_VAL(NotAllowed);
+MOUSECURSOR_VAL(COUNT);
+#undef MOUSECURSOR_VAL
+
+#define MOUSESOURCE_VAL(F) static_assert((int)IGSharp_MouseSource_##F == (int)ImGuiMouseSource_##F, "IGSharp_MouseSource_" #F " value drift")
+MOUSESOURCE_VAL(Mouse);
+MOUSESOURCE_VAL(TouchScreen);
+MOUSESOURCE_VAL(Pen);
+MOUSESOURCE_VAL(COUNT);
+#undef MOUSESOURCE_VAL
+
+#define COND_VAL(F) static_assert((int)IGSharp_Cond_##F == (int)ImGuiCond_##F, "IGSharp_Cond_" #F " value drift")
+COND_VAL(None);
+COND_VAL(Always);
+COND_VAL(Once);
+COND_VAL(FirstUseEver);
+COND_VAL(Appearing);
+#undef COND_VAL
+
+// ---- ImGuiTreeNodeFlags_ ----
+#define TREENODEFLAGS_VAL(F) static_assert((int)IGSharp_TreeNodeFlags_##F == (int)ImGuiTreeNodeFlags_##F, "IGSharp_TreeNodeFlags_" #F " value drift")
+TREENODEFLAGS_VAL(None);
+TREENODEFLAGS_VAL(Selected);
+TREENODEFLAGS_VAL(Framed);
+TREENODEFLAGS_VAL(AllowOverlap);
+TREENODEFLAGS_VAL(NoTreePushOnOpen);
+TREENODEFLAGS_VAL(NoAutoOpenOnLog);
+TREENODEFLAGS_VAL(DefaultOpen);
+TREENODEFLAGS_VAL(OpenOnDoubleClick);
+TREENODEFLAGS_VAL(OpenOnArrow);
+TREENODEFLAGS_VAL(Leaf);
+TREENODEFLAGS_VAL(Bullet);
+TREENODEFLAGS_VAL(FramePadding);
+TREENODEFLAGS_VAL(SpanAvailWidth);
+TREENODEFLAGS_VAL(SpanFullWidth);
+TREENODEFLAGS_VAL(SpanLabelWidth);
+TREENODEFLAGS_VAL(SpanAllColumns);
+TREENODEFLAGS_VAL(LabelSpanAllColumns);
+TREENODEFLAGS_VAL(NavLeftJumpsToParent);
+TREENODEFLAGS_VAL(CollapsingHeader);
+TREENODEFLAGS_VAL(DrawLinesNone);
+TREENODEFLAGS_VAL(DrawLinesFull);
+TREENODEFLAGS_VAL(DrawLinesToNodes);
+#undef TREENODEFLAGS_VAL
+
+#define SELECTABLEFLAGS_VAL(F) static_assert((int)IGSharp_SelectableFlags_##F == (int)ImGuiSelectableFlags_##F, "IGSharp_SelectableFlags_" #F " value drift")
+SELECTABLEFLAGS_VAL(None);
+SELECTABLEFLAGS_VAL(NoAutoClosePopups);
+SELECTABLEFLAGS_VAL(SpanAllColumns);
+SELECTABLEFLAGS_VAL(AllowDoubleClick);
+SELECTABLEFLAGS_VAL(Disabled);
+SELECTABLEFLAGS_VAL(AllowOverlap);
+SELECTABLEFLAGS_VAL(Highlight);
+SELECTABLEFLAGS_VAL(SelectOnNav);
+#undef SELECTABLEFLAGS_VAL
+
+#define DIR_VAL(F) static_assert((int)IGSharp_Dir_##F == (int)ImGuiDir_##F, "IGSharp_Dir_" #F " value drift")
+DIR_VAL(None);
+DIR_VAL(Left);
+DIR_VAL(Right);
+DIR_VAL(Up);
+DIR_VAL(Down);
+DIR_VAL(COUNT);
+#undef DIR_VAL
+
+#define BTNFLAGS_VAL(F) static_assert((int)IGSharp_ButtonFlags_##F == (int)ImGuiButtonFlags_##F, "IGSharp_ButtonFlags_" #F " value drift")
+BTNFLAGS_VAL(None);
+BTNFLAGS_VAL(MouseButtonLeft);
+BTNFLAGS_VAL(MouseButtonRight);
+BTNFLAGS_VAL(MouseButtonMiddle);
+BTNFLAGS_VAL(MouseButtonMask_);
+BTNFLAGS_VAL(EnableNav);
+BTNFLAGS_VAL(AllowOverlap);
+#undef BTNFLAGS_VAL
+
+#define MOUSEBUTTON_VAL(F) static_assert((int)IGSharp_MouseButton_##F == (int)ImGuiMouseButton_##F, "IGSharp_MouseButton_" #F " value drift")
+MOUSEBUTTON_VAL(Left);
+MOUSEBUTTON_VAL(Right);
+MOUSEBUTTON_VAL(Middle);
+MOUSEBUTTON_VAL(COUNT);
+#undef MOUSEBUTTON_VAL
+
+#define TABLEFLAGS_VAL(F) static_assert((int)IGSharp_TableFlags_##F == (int)ImGuiTableFlags_##F, "IGSharp_TableFlags_" #F " value drift")
+TABLEFLAGS_VAL(None);
+TABLEFLAGS_VAL(Resizable);
+TABLEFLAGS_VAL(Reorderable);
+TABLEFLAGS_VAL(Hideable);
+TABLEFLAGS_VAL(Sortable);
+TABLEFLAGS_VAL(NoSavedSettings);
+TABLEFLAGS_VAL(ContextMenuInBody);
+TABLEFLAGS_VAL(RowBg);
+TABLEFLAGS_VAL(BordersInnerH);
+TABLEFLAGS_VAL(BordersOuterH);
+TABLEFLAGS_VAL(BordersInnerV);
+TABLEFLAGS_VAL(BordersOuterV);
+TABLEFLAGS_VAL(BordersH);
+TABLEFLAGS_VAL(BordersV);
+TABLEFLAGS_VAL(BordersInner);
+TABLEFLAGS_VAL(BordersOuter);
+TABLEFLAGS_VAL(Borders);
+TABLEFLAGS_VAL(NoBordersInBody);
+TABLEFLAGS_VAL(NoBordersInBodyUntilResize);
+TABLEFLAGS_VAL(SizingFixedFit);
+TABLEFLAGS_VAL(SizingFixedSame);
+TABLEFLAGS_VAL(SizingStretchProp);
+TABLEFLAGS_VAL(SizingStretchSame);
+TABLEFLAGS_VAL(NoHostExtendX);
+TABLEFLAGS_VAL(NoHostExtendY);
+TABLEFLAGS_VAL(NoKeepColumnsVisible);
+TABLEFLAGS_VAL(PreciseWidths);
+TABLEFLAGS_VAL(NoClip);
+TABLEFLAGS_VAL(PadOuterX);
+TABLEFLAGS_VAL(NoPadOuterX);
+TABLEFLAGS_VAL(NoPadInnerX);
+TABLEFLAGS_VAL(ScrollX);
+TABLEFLAGS_VAL(ScrollY);
+TABLEFLAGS_VAL(SortMulti);
+TABLEFLAGS_VAL(SortTristate);
+TABLEFLAGS_VAL(HighlightHoveredColumn);
+#undef TABLEFLAGS_VAL
+
+#define TBLCOL_VAL(F) static_assert((int)IGSharp_TableColumnFlags_##F == (int)ImGuiTableColumnFlags_##F, "IGSharp_TableColumnFlags_" #F " value drift")
+TBLCOL_VAL(None);
+TBLCOL_VAL(Disabled);
+TBLCOL_VAL(DefaultHide);
+TBLCOL_VAL(DefaultSort);
+TBLCOL_VAL(WidthStretch);
+TBLCOL_VAL(WidthFixed);
+TBLCOL_VAL(NoResize);
+TBLCOL_VAL(NoReorder);
+TBLCOL_VAL(NoHide);
+TBLCOL_VAL(NoClip);
+TBLCOL_VAL(NoSort);
+TBLCOL_VAL(NoSortAscending);
+TBLCOL_VAL(NoSortDescending);
+TBLCOL_VAL(NoHeaderLabel);
+TBLCOL_VAL(NoHeaderWidth);
+TBLCOL_VAL(PreferSortAscending);
+TBLCOL_VAL(PreferSortDescending);
+TBLCOL_VAL(IndentEnable);
+TBLCOL_VAL(IndentDisable);
+TBLCOL_VAL(AngledHeader);
+TBLCOL_VAL(IsEnabled);
+TBLCOL_VAL(IsVisible);
+TBLCOL_VAL(IsSorted);
+TBLCOL_VAL(IsHovered);
+#undef TBLCOL_VAL
+
+static_assert((int)IGSharp_TableRowFlags_None == (int)ImGuiTableRowFlags_None, "IGSharp_TableRowFlags_None value drift");
+static_assert((int)IGSharp_TableRowFlags_Headers == (int)ImGuiTableRowFlags_Headers, "IGSharp_TableRowFlags_Headers value drift");
+
+static_assert((int)IGSharp_TableBgTarget_None  == (int)ImGuiTableBgTarget_None,  "IGSharp_TableBgTarget_None value drift");
+static_assert((int)IGSharp_TableBgTarget_RowBg0 == (int)ImGuiTableBgTarget_RowBg0, "IGSharp_TableBgTarget_RowBg0 value drift");
+static_assert((int)IGSharp_TableBgTarget_RowBg1 == (int)ImGuiTableBgTarget_RowBg1, "IGSharp_TableBgTarget_RowBg1 value drift");
+static_assert((int)IGSharp_TableBgTarget_CellBg == (int)ImGuiTableBgTarget_CellBg, "IGSharp_TableBgTarget_CellBg value drift");
+
+#define LISTCLIPPERFLAGS_VAL(F) static_assert((int)IGSharp_ListClipperFlags_##F == (int)ImGuiListClipperFlags_##F, "IGSharp_ListClipperFlags_" #F " value drift")
+LISTCLIPPERFLAGS_VAL(None);
+LISTCLIPPERFLAGS_VAL(NoSetTableRowCounters);
+#undef LISTCLIPPERFLAGS_VAL
+
+#define MSF_VAL(F) static_assert((int)IGSharp_MultiSelectFlags_##F == (int)ImGuiMultiSelectFlags_##F, "IGSharp_MultiSelectFlags_" #F " value drift")
+MSF_VAL(None);
+MSF_VAL(SingleSelect);
+MSF_VAL(NoSelectAll);
+MSF_VAL(NoRangeSelect);
+MSF_VAL(NoAutoSelect);
+MSF_VAL(NoAutoClear);
+MSF_VAL(NoAutoClearOnReselect);
+MSF_VAL(BoxSelect1d);
+MSF_VAL(BoxSelect2d);
+MSF_VAL(BoxSelectNoScroll);
+MSF_VAL(ClearOnEscape);
+MSF_VAL(ClearOnClickVoid);
+MSF_VAL(ScopeWindow);
+MSF_VAL(ScopeRect);
+MSF_VAL(SelectOnAuto);
+MSF_VAL(SelectOnClickAlways);
+MSF_VAL(SelectOnClickRelease);
+MSF_VAL(NavWrapX);
+MSF_VAL(NoSelectOnRightClick);
+MSF_VAL(SelectOnMask_);
+#undef MSF_VAL
+
+static_assert((int)IGSharp_SelectionRequestType_None    == (int)ImGuiSelectionRequestType_None,    "IGSharp_SelectionRequestType_None value drift");
+static_assert((int)IGSharp_SelectionRequestType_SetAll  == (int)ImGuiSelectionRequestType_SetAll,  "IGSharp_SelectionRequestType_SetAll value drift");
+static_assert((int)IGSharp_SelectionRequestType_SetRange == (int)ImGuiSelectionRequestType_SetRange, "IGSharp_SelectionRequestType_SetRange value drift");
+
+// ImDrawFlags_
+#define DRAWFLAGS_VAL(F) static_assert((int)IGSharp_DrawFlags_##F == (int)ImDrawFlags_##F, "IGSharp_DrawFlags_" #F " value drift")
+DRAWFLAGS_VAL(None);
+DRAWFLAGS_VAL(Closed);
+DRAWFLAGS_VAL(RoundCornersTopLeft);
+DRAWFLAGS_VAL(RoundCornersTopRight);
+DRAWFLAGS_VAL(RoundCornersBottomLeft);
+DRAWFLAGS_VAL(RoundCornersBottomRight);
+DRAWFLAGS_VAL(RoundCornersNone);
+DRAWFLAGS_VAL(RoundCornersTop);
+DRAWFLAGS_VAL(RoundCornersBottom);
+DRAWFLAGS_VAL(RoundCornersLeft);
+DRAWFLAGS_VAL(RoundCornersRight);
+DRAWFLAGS_VAL(RoundCornersAll);
+DRAWFLAGS_VAL(RoundCornersDefault_);
+DRAWFLAGS_VAL(RoundCornersMask_);
+#undef DRAWFLAGS_VAL
+
+// ImDrawListFlags_
+#define DRAWLISTFLAGS_VAL(F) static_assert((int)IGSharp_DrawListFlags_##F == (int)ImDrawListFlags_##F, "IGSharp_DrawListFlags_" #F " value drift")
+DRAWLISTFLAGS_VAL(None);
+DRAWLISTFLAGS_VAL(AntiAliasedLines);
+DRAWLISTFLAGS_VAL(AntiAliasedLinesUseTex);
+DRAWLISTFLAGS_VAL(AntiAliasedFill);
+DRAWLISTFLAGS_VAL(AllowVtxOffset);
+#undef DRAWLISTFLAGS_VAL
+
+// ImDrawVert
+#ifndef IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT
+static_assert(sizeof(IGSharp_DrawVert) == sizeof(ImDrawVert), "IGSharp_DrawVert size mismatch with ImDrawVert");
+static_assert(offsetof(IGSharp_DrawVert, pos) == offsetof(ImDrawVert, pos), "IGSharp_DrawVert.pos");
+static_assert(offsetof(IGSharp_DrawVert, uv) == offsetof(ImDrawVert, uv), "IGSharp_DrawVert.uv");
+static_assert(offsetof(IGSharp_DrawVert, col) == offsetof(ImDrawVert, col), "IGSharp_DrawVert.col");
+#endif
+
+// ImTextureFormat
+#define TEXFMT_VAL(F) static_assert((int)IGSharp_TextureFormat_##F == (int)ImTextureFormat_##F, "IGSharp_TextureFormat_" #F " value drift")
+TEXFMT_VAL(RGBA32);
+TEXFMT_VAL(Alpha8);
+#undef TEXFMT_VAL
+
+// ImTextureStatus
+#define TEXSTATUS_VAL(F) static_assert((int)IGSharp_TextureStatus_##F == (int)ImTextureStatus_##F, "IGSharp_TextureStatus_" #F " value drift")
+TEXSTATUS_VAL(OK);
+TEXSTATUS_VAL(Destroyed);
+TEXSTATUS_VAL(WantCreate);
+TEXSTATUS_VAL(WantUpdates);
+TEXSTATUS_VAL(WantDestroy);
+#undef TEXSTATUS_VAL
+
+// ImTextureRect
+static_assert(sizeof(IGSharp_TextureRect) == sizeof(ImTextureRect), "IGSharp_TextureRect size mismatch with ImTextureRect");
+static_assert(offsetof(IGSharp_TextureRect, x) == offsetof(ImTextureRect, x), "IGSharp_TextureRect.x");
+static_assert(offsetof(IGSharp_TextureRect, y) == offsetof(ImTextureRect, y), "IGSharp_TextureRect.y");
+static_assert(offsetof(IGSharp_TextureRect, w) == offsetof(ImTextureRect, w), "IGSharp_TextureRect.w");
+static_assert(offsetof(IGSharp_TextureRect, h) == offsetof(ImTextureRect, h), "IGSharp_TextureRect.h");
+
+// ImFontAtlasFlags_
+#define FONTATLASFLAGS_VAL(F) static_assert((int)IGSharp_FontAtlasFlags_##F == (int)ImFontAtlasFlags_##F, "IGSharp_FontAtlasFlags_" #F " value drift")
+FONTATLASFLAGS_VAL(None);
+FONTATLASFLAGS_VAL(NoPowerOfTwoHeight);
+FONTATLASFLAGS_VAL(NoMouseCursors);
+FONTATLASFLAGS_VAL(NoBakedLines);
+#undef FONTATLASFLAGS_VAL
+
+// ImFontFlags_
+#define FONTFLAGS_VAL(F) static_assert((int)IGSharp_FontFlags_##F == (int)ImFontFlags_##F, "IGSharp_FontFlags_" #F " value drift")
+FONTFLAGS_VAL(None);
+FONTFLAGS_VAL(NoLoadError);
+FONTFLAGS_VAL(NoLoadGlyphs);
+FONTFLAGS_VAL(LockBakedSizes);
+#undef FONTFLAGS_VAL
+
+// ImFontAtlasRect mirror
+static_assert(sizeof(IGSharp_FontAtlasRect) == sizeof(ImFontAtlasRect), "IGSharp_FontAtlasRect size mismatch with ImFontAtlasRect");
+static_assert(offsetof(IGSharp_FontAtlasRect, x)   == offsetof(ImFontAtlasRect, x),   "IGSharp_FontAtlasRect.x");
+static_assert(offsetof(IGSharp_FontAtlasRect, y)   == offsetof(ImFontAtlasRect, y),   "IGSharp_FontAtlasRect.y");
+static_assert(offsetof(IGSharp_FontAtlasRect, w)   == offsetof(ImFontAtlasRect, w),   "IGSharp_FontAtlasRect.w");
+static_assert(offsetof(IGSharp_FontAtlasRect, h)   == offsetof(ImFontAtlasRect, h),   "IGSharp_FontAtlasRect.h");
+static_assert(offsetof(IGSharp_FontAtlasRect, uv0) == offsetof(ImFontAtlasRect, uv0), "IGSharp_FontAtlasRect.uv0");
+static_assert(offsetof(IGSharp_FontAtlasRect, uv1) == offsetof(ImFontAtlasRect, uv1), "IGSharp_FontAtlasRect.uv1");
+
+// ImGuiViewportFlags_
+#define VPFLAG_VAL(F) static_assert((int)IGSharp_ViewportFlags_##F == (int)ImGuiViewportFlags_##F, "IGSharp_ViewportFlags_" #F " value drift")
+VPFLAG_VAL(None);
+VPFLAG_VAL(IsPlatformWindow);
+VPFLAG_VAL(IsPlatformMonitor);
+VPFLAG_VAL(OwnedByApp);
+#undef VPFLAG_VAL
+
+// --- IGSharp_PlatformImeData -----------------------------------------------
+
+static_assert(sizeof(IGSharp_PlatformImeData) == sizeof(ImGuiPlatformImeData), "IGSharp_PlatformImeData size mismatch with ImGuiPlatformImeData");
+static_assert(offsetof(IGSharp_PlatformImeData, WantVisible)     == offsetof(ImGuiPlatformImeData, WantVisible),     "IGSharp_PlatformImeData.WantVisible");
+static_assert(offsetof(IGSharp_PlatformImeData, WantTextInput)   == offsetof(ImGuiPlatformImeData, WantTextInput),   "IGSharp_PlatformImeData.WantTextInput");
+static_assert(offsetof(IGSharp_PlatformImeData, InputPos)        == offsetof(ImGuiPlatformImeData, InputPos),        "IGSharp_PlatformImeData.InputPos");
+static_assert(offsetof(IGSharp_PlatformImeData, InputLineHeight) == offsetof(ImGuiPlatformImeData, InputLineHeight), "IGSharp_PlatformImeData.InputLineHeight");
+static_assert(offsetof(IGSharp_PlatformImeData, ViewportId)      == offsetof(ImGuiPlatformImeData, ViewportId),      "IGSharp_PlatformImeData.ViewportId");
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif

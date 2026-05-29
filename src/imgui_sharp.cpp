@@ -916,3 +916,838 @@ bool IGSharp_InputScalar(const char* label, int data_type, void* p_data, const v
 
 bool IGSharp_InputScalarN(const char* label, int data_type, void* p_data, int components, const void* p_step, const void* p_step_fast, const char* format, int flags)
 { return ImGui::InputScalarN(label, (ImGuiDataType)data_type, p_data, components, p_step, p_step_fast, format, flags); }
+
+// --- fn-platform-io-and-window-set ---
+
+void IGSharp_SetWindowPos(IGSharp_Vec2 pos, int cond)            { ImGui::SetWindowPos(ToImVec2(pos), cond); }
+void IGSharp_SetWindowSize(IGSharp_Vec2 size, int cond)          { ImGui::SetWindowSize(ToImVec2(size), cond); }
+void IGSharp_SetWindowCollapsed(bool collapsed, int cond)        { ImGui::SetWindowCollapsed(collapsed, cond); }
+void IGSharp_SetWindowFocus(void)                                { ImGui::SetWindowFocus(); }
+void IGSharp_SetWindowPosNamed(const char* name, IGSharp_Vec2 pos, int cond)   { ImGui::SetWindowPos(name, ToImVec2(pos), cond); }
+void IGSharp_SetWindowSizeNamed(const char* name, IGSharp_Vec2 size, int cond) { ImGui::SetWindowSize(name, ToImVec2(size), cond); }
+void IGSharp_SetWindowCollapsedNamed(const char* name, bool collapsed, int cond) { ImGui::SetWindowCollapsed(name, collapsed, cond); }
+void IGSharp_SetWindowFocusNamed(const char* name)              { ImGui::SetWindowFocus(name); }
+
+// --- fn-font-baked-style-stacks ---
+
+void* IGSharp_GetFontBaked(void)                { return (void*)ImGui::GetFontBaked(); }
+
+void IGSharp_PushStyleVarX(int idx, float val_x) { ImGui::PushStyleVarX(idx, val_x); }
+void IGSharp_PushStyleVarY(int idx, float val_y) { ImGui::PushStyleVarY(idx, val_y); }
+
+IGSharp_Vec2 IGSharp_GetFontTexUvWhitePixel(void) { return FromImVec2(ImGui::GetFontTexUvWhitePixel()); }
+IGSharp_Vec4 IGSharp_GetStyleColorVec4(int idx)
+{
+    const ImVec4& v = ImGui::GetStyleColorVec4(idx);
+    return { v.x, v.y, v.z, v.w };
+}
+
+// --- fn-cursor-axis-id-ptr ---
+
+float IGSharp_GetCursorPosX(void)               { return ImGui::GetCursorPosX(); }
+float IGSharp_GetCursorPosY(void)               { return ImGui::GetCursorPosY(); }
+void  IGSharp_SetCursorPosX(float local_x)      { ImGui::SetCursorPosX(local_x); }
+void  IGSharp_SetCursorPosY(float local_y)      { ImGui::SetCursorPosY(local_y); }
+IGSharp_Vec2 IGSharp_GetCursorStartPos(void)    { return FromImVec2(ImGui::GetCursorStartPos()); }
+
+void IGSharp_PushIDPtr(const void* ptr_id)      { ImGui::PushID(ptr_id); }
+void IGSharp_PushIDStrRange(const char* str_id_begin, const char* str_id_end) { ImGui::PushID(str_id_begin, str_id_end); }
+unsigned int IGSharp_GetIDStrRange(const char* str_id_begin, const char* str_id_end) { return ImGui::GetID(str_id_begin, str_id_end); }
+unsigned int IGSharp_GetIDPtr(const void* ptr_id) { return ImGui::GetID(ptr_id); }
+unsigned int IGSharp_GetIDInt(int int_id)       { return ImGui::GetID(int_id); }
+
+// --- fn-combo-listbox-helpers ---
+
+// (add to "--- Widgets: Images ---" group, after IGSharp_ImageButton)
+
+void IGSharp_Image(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1)
+{ ImGui::Image((ImTextureID)tex_id, ToImVec2(image_size), ToImVec2(uv0), ToImVec2(uv1)); }
+
+// (add to "--- Widgets: Combo ---" group, after IGSharp_EndCombo)
+
+bool IGSharp_Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items)
+{ return ImGui::Combo(label, current_item, items, items_count, popup_max_height_in_items); }
+
+bool IGSharp_ComboStr(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items)
+{ return ImGui::Combo(label, current_item, items_separated_by_zeros, popup_max_height_in_items); }
+
+bool IGSharp_ComboCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height_in_items)
+{ return ImGui::Combo(label, current_item, getter, user_data, items_count, popup_max_height_in_items); }
+
+// (add to "--- Widgets: List Boxes ---" group, after IGSharp_EndListBox)
+
+bool IGSharp_ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items)
+{ return ImGui::ListBox(label, current_item, items, items_count, height_in_items); }
+
+bool IGSharp_ListBoxCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int height_in_items)
+{ return ImGui::ListBox(label, current_item, getter, user_data, items_count, height_in_items); }
+
+// --- fn-vslider-tree-value ---
+
+bool IGSharp_VSliderFloat(const char* label, IGSharp_Vec2 size, float* v, float v_min, float v_max, const char* format, int flags)
+{ return ImGui::VSliderFloat(label, ToImVec2(size), v, v_min, v_max, format, flags); }
+
+bool IGSharp_VSliderInt(const char* label, IGSharp_Vec2 size, int* v, int v_min, int v_max, const char* format, int flags)
+{ return ImGui::VSliderInt(label, ToImVec2(size), v, v_min, v_max, format, flags); }
+
+void IGSharp_TreePushStr(const char* str_id)   { ImGui::TreePush(str_id); }
+void IGSharp_TreePushPtr(const void* ptr_id)   { ImGui::TreePush(ptr_id); }
+
+void IGSharp_SetNextItemStorageID(unsigned int storage_id)
+{ ImGui::SetNextItemStorageID((ImGuiID)storage_id); }
+
+void IGSharp_ValueBool(const char* prefix, bool b)          { ImGui::Value(prefix, b); }
+void IGSharp_ValueInt(const char* prefix, int v)            { ImGui::Value(prefix, v); }
+void IGSharp_ValueUInt(const char* prefix, unsigned int v)  { ImGui::Value(prefix, v); }
+void IGSharp_ValueFloat(const char* prefix, float v, const char* float_format)
+{ ImGui::Value(prefix, v, float_format); }
+
+// --- fn-popup-extra-overloads ---
+
+void IGSharp_OpenPopupID(unsigned int id, int popup_flags)
+{ ImGui::OpenPopup((ImGuiID)id, popup_flags); }
+
+void IGSharp_OpenPopupOnItemClick(const char* str_id, int popup_flags)
+{ ImGui::OpenPopupOnItemClick(str_id, popup_flags); }
+
+bool IGSharp_BeginPopupContextVoid(const char* str_id, int popup_flags)
+{ return ImGui::BeginPopupContextVoid(str_id, popup_flags); }
+
+// --- fn-tables-angled-and-legacy-columns ---
+
+// Tables: angled headers
+void  IGSharp_TableAngledHeadersRow(void)                       { ImGui::TableAngledHeadersRow(); }
+
+// Legacy Columns API (prefer using Tables!)
+void  IGSharp_Columns(int count, const char* id, bool borders)  { ImGui::Columns(count, id, borders); }
+void  IGSharp_NextColumn(void)                                  { ImGui::NextColumn(); }
+int   IGSharp_GetColumnIndex(void)                              { return ImGui::GetColumnIndex(); }
+float IGSharp_GetColumnWidth(int column_index)                  { return ImGui::GetColumnWidth(column_index); }
+void  IGSharp_SetColumnWidth(int column_index, float width)     { ImGui::SetColumnWidth(column_index, width); }
+float IGSharp_GetColumnOffset(int column_index)                 { return ImGui::GetColumnOffset(column_index); }
+void  IGSharp_SetColumnOffset(int column_index, float offset_x) { ImGui::SetColumnOffset(column_index, offset_x); }
+int   IGSharp_GetColumnsCount(void)                             { return ImGui::GetColumnsCount(); }
+
+// --- fn-logging-capture ---
+
+// Logging/Capture
+
+void IGSharp_LogToTTY(int auto_open_depth)              { ImGui::LogToTTY(auto_open_depth); }
+void IGSharp_LogToFile(int auto_open_depth, const char* filename)
+{ ImGui::LogToFile(auto_open_depth, filename); }
+void IGSharp_LogToClipboard(int auto_open_depth)        { ImGui::LogToClipboard(auto_open_depth); }
+void IGSharp_LogFinish(void)                            { ImGui::LogFinish(); }
+void IGSharp_LogButtons(void)                           { ImGui::LogButtons(); }
+void IGSharp_LogText(const char* text)                  { ImGui::LogText("%s", text); }
+
+// --- fn-clipping-nav-itemflags ---
+
+// Clipping
+void IGSharp_PushClipRect(IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current_clip_rect)
+{ ImGui::PushClipRect(ToImVec2(clip_rect_min), ToImVec2(clip_rect_max), intersect_with_current_clip_rect); }
+void IGSharp_PopClipRect(void)
+{ ImGui::PopClipRect(); }
+
+// Keyboard/Gamepad Navigation
+void IGSharp_SetNavCursorVisible(bool visible)
+{ ImGui::SetNavCursorVisible(visible); }
+
+// Item/Widgets Utilities and Query Functions
+int IGSharp_GetItemFlags(void)
+{ return (int)ImGui::GetItemFlags(); }
+
+// --- fn-misc-utilities ---
+
+bool IGSharp_IsRectVisible(IGSharp_Vec2 size)                                { return ImGui::IsRectVisible(ToImVec2(size)); }
+bool IGSharp_IsRectVisibleRange(IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max){ return ImGui::IsRectVisible(ToImVec2(rect_min), ToImVec2(rect_max)); }
+double IGSharp_GetTime(void)                                                 { return ImGui::GetTime(); }
+int IGSharp_GetFrameCount(void)                                              { return ImGui::GetFrameCount(); }
+void* IGSharp_GetDrawListSharedData(void)                                    { return ImGui::GetDrawListSharedData(); }
+const char* IGSharp_GetStyleColorName(int idx)                              { return ImGui::GetStyleColorName((ImGuiCol)idx); }
+void IGSharp_SetStateStorage(void* storage)                                  { ImGui::SetStateStorage((ImGuiStorage*)storage); }
+void* IGSharp_GetStateStorage(void)                                          { return ImGui::GetStateStorage(); }
+
+// --- fn-inputs-keyboard-shortcut ---
+
+int IGSharp_GetKeyPressedAmount(int key, float repeat_delay, float rate)  { return ImGui::GetKeyPressedAmount((ImGuiKey)key, repeat_delay, rate); }
+const char* IGSharp_GetKeyName(int key)                  { return ImGui::GetKeyName((ImGuiKey)key); }
+void IGSharp_SetNextFrameWantCaptureKeyboard(bool want_capture_keyboard) { ImGui::SetNextFrameWantCaptureKeyboard(want_capture_keyboard); }
+
+bool IGSharp_Shortcut(int key_chord, int flags)          { return ImGui::Shortcut((ImGuiKeyChord)key_chord, (ImGuiInputFlags)flags); }
+void IGSharp_SetNextItemShortcut(int key_chord, int flags) { ImGui::SetNextItemShortcut((ImGuiKeyChord)key_chord, (ImGuiInputFlags)flags); }
+
+void IGSharp_SetItemKeyOwner(int key)                    { ImGui::SetItemKeyOwner((ImGuiKey)key); }
+
+// --- fn-inputs-mouse-extra ---
+
+bool IGSharp_IsMouseReleasedWithDelay(int button, float delay)
+{ return ImGui::IsMouseReleasedWithDelay(button, delay); }
+int IGSharp_GetMouseClickedCount(int button)             { return ImGui::GetMouseClickedCount(button); }
+bool IGSharp_IsAnyMouseDown(void)                        { return ImGui::IsAnyMouseDown(); }
+IGSharp_Vec2 IGSharp_GetMousePosOnOpeningCurrentPopup(void)
+{ return FromImVec2(ImGui::GetMousePosOnOpeningCurrentPopup()); }
+void IGSharp_ResetMouseDragDelta(int button)             { ImGui::ResetMouseDragDelta(button); }
+void IGSharp_SetNextFrameWantCaptureMouse(bool want_capture_mouse)
+{ ImGui::SetNextFrameWantCaptureMouse(want_capture_mouse); }
+
+// --- fn-clipboard-ini-settings ---
+
+// --- Clipboard Utilities ---
+
+const char* IGSharp_GetClipboardText(void)              { return ImGui::GetClipboardText(); }
+void        IGSharp_SetClipboardText(const char* text)  { ImGui::SetClipboardText(text); }
+
+// --- Settings/.Ini Utilities ---
+
+void        IGSharp_LoadIniSettingsFromDisk(const char* ini_filename)               { ImGui::LoadIniSettingsFromDisk(ini_filename); }
+void        IGSharp_LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size) { ImGui::LoadIniSettingsFromMemory(ini_data, ini_size); }
+void        IGSharp_SaveIniSettingsToDisk(const char* ini_filename)                 { ImGui::SaveIniSettingsToDisk(ini_filename); }
+const char* IGSharp_SaveIniSettingsToMemory(size_t* out_ini_size)                   { return ImGui::SaveIniSettingsToMemory(out_ini_size); }
+
+// --- fn-debug-and-memory ---
+
+// --- Debug Tools ---
+
+void IGSharp_DebugTextEncoding(const char* text)    { ImGui::DebugTextEncoding(text); }
+void IGSharp_DebugFlashStyleColor(int idx)          { ImGui::DebugFlashStyleColor((ImGuiCol)idx); }
+void IGSharp_DebugStartItemPicker(void)             { ImGui::DebugStartItemPicker(); }
+bool IGSharp_DebugCheckVersionAndDataLayout(const char* version_str, size_t sz_io, size_t sz_style, size_t sz_vec2, size_t sz_vec4, size_t sz_drawvert, size_t sz_drawidx)
+{
+    return ImGui::DebugCheckVersionAndDataLayout(version_str, sz_io, sz_style, sz_vec2, sz_vec4, sz_drawvert, sz_drawidx);
+}
+void IGSharp_DebugLog(const char* text)             { ImGui::DebugLog("%s", text); }
+
+// --- Memory Allocators ---
+
+void IGSharp_SetAllocatorFunctions(IGSharp_MemAllocFunc alloc_func, IGSharp_MemFreeFunc free_func, void* user_data)
+{
+    ImGui::SetAllocatorFunctions((ImGuiMemAllocFunc)alloc_func, (ImGuiMemFreeFunc)free_func, user_data);
+}
+void IGSharp_GetAllocatorFunctions(IGSharp_MemAllocFunc* p_alloc_func, IGSharp_MemFreeFunc* p_free_func, void** p_user_data)
+{
+    ImGui::GetAllocatorFunctions((ImGuiMemAllocFunc*)p_alloc_func, (ImGuiMemFreeFunc*)p_free_func, p_user_data);
+}
+void*  IGSharp_MemAlloc(size_t size)                { return ImGui::MemAlloc(size); }
+void   IGSharp_MemFree(void* ptr)                   { ImGui::MemFree(ptr); }
+
+// --- fn-io-setkeyeventnativedata ---
+void IGSharp_IO_SetKeyEventNativeData(IGSharp_IO* io, int key, int native_keycode, int native_scancode, int native_legacy_index) { AsIO(io)->SetKeyEventNativeData((ImGuiKey)key, native_keycode, native_scancode, native_legacy_index); }
+
+// --- ImGuiSizeCallbackData accessors ---
+// --- ImGuiSizeCallbackData: Field Accessors ---
+
+#define SCBD(p) ((ImGuiSizeCallbackData*)(p))
+
+void*        IGSharp_SizeCallbackData_GetUserData(void* d)      { return SCBD(d)->UserData; }
+IGSharp_Vec2 IGSharp_SizeCallbackData_GetPos(void* d)          { return FromImVec2(SCBD(d)->Pos); }
+IGSharp_Vec2 IGSharp_SizeCallbackData_GetCurrentSize(void* d)  { return FromImVec2(SCBD(d)->CurrentSize); }
+IGSharp_Vec2 IGSharp_SizeCallbackData_GetDesiredSize(void* d)  { return FromImVec2(SCBD(d)->DesiredSize); }
+void         IGSharp_SizeCallbackData_SetDesiredSize(void* d, IGSharp_Vec2 v) { SCBD(d)->DesiredSize = ToImVec2(v); }
+
+#undef SCBD
+
+// --- ImGuiInputTextCallbackData remaining accessors/helpers ---
+unsigned int   IGSharp_InputTextCallbackData_GetID(void* d)               { return (unsigned int)((ImGuiInputTextCallbackData*)d)->ID; }
+void IGSharp_InputTextCallbackData_SetSelection(void* d, int s, int e) { ((ImGuiInputTextCallbackData*)d)->SetSelection(s, e); }
+
+// --- OnceUponAFrame ---
+void* IGSharp_OnceUponAFrame_New(void)          { return new ImGuiOnceUponAFrame(); }
+void IGSharp_OnceUponAFrame_Delete(void* oaf)   { delete (ImGuiOnceUponAFrame*)oaf; }
+bool IGSharp_OnceUponAFrame_Check(void* oaf)    { return (bool)*((ImGuiOnceUponAFrame*)oaf); }
+int IGSharp_OnceUponAFrame_GetRefFrame(void* oaf) { return ((ImGuiOnceUponAFrame*)oaf)->RefFrame; }
+
+// --- ImGuiTextFilter ---
+// Helpers: ImGuiTextFilter (opaque handle; internals not mirrored)
+IGSharp_TextFilter* IGSharp_TextFilter_New(const char* default_filter)
+{ return reinterpret_cast<IGSharp_TextFilter*>(IM_NEW(ImGuiTextFilter)(default_filter)); }
+void IGSharp_TextFilter_Delete(IGSharp_TextFilter* filter)
+{ IM_DELETE(reinterpret_cast<ImGuiTextFilter*>(filter)); }
+bool IGSharp_TextFilter_Draw(IGSharp_TextFilter* filter, const char* label, float width)
+{ return reinterpret_cast<ImGuiTextFilter*>(filter)->Draw(label, width); }
+bool IGSharp_TextFilter_PassFilter(IGSharp_TextFilter* filter, const char* text, const char* text_end)
+{ return reinterpret_cast<ImGuiTextFilter*>(filter)->PassFilter(text, text_end); }
+void IGSharp_TextFilter_Build(IGSharp_TextFilter* filter)
+{ reinterpret_cast<ImGuiTextFilter*>(filter)->Build(); }
+void IGSharp_TextFilter_Clear(IGSharp_TextFilter* filter)
+{ reinterpret_cast<ImGuiTextFilter*>(filter)->Clear(); }
+bool IGSharp_TextFilter_IsActive(IGSharp_TextFilter* filter)
+{ return reinterpret_cast<ImGuiTextFilter*>(filter)->IsActive(); }
+
+// --- ImGuiTextBuffer ---
+
+void* IGSharp_TextBuffer_New(void)              { return new ImGuiTextBuffer(); }
+void IGSharp_TextBuffer_Delete(void* buf)       { delete (ImGuiTextBuffer*)buf; }
+
+const char* IGSharp_TextBuffer_CStr(void* buf)  { return ((ImGuiTextBuffer*)buf)->c_str(); }
+int IGSharp_TextBuffer_Size(void* buf)          { return ((ImGuiTextBuffer*)buf)->size(); }
+bool IGSharp_TextBuffer_Empty(void* buf)        { return ((ImGuiTextBuffer*)buf)->empty(); }
+void IGSharp_TextBuffer_Clear(void* buf)        { ((ImGuiTextBuffer*)buf)->clear(); }
+void IGSharp_TextBuffer_Resize(void* buf, int size)         { ((ImGuiTextBuffer*)buf)->resize(size); }
+void IGSharp_TextBuffer_Reserve(void* buf, int capacity)    { ((ImGuiTextBuffer*)buf)->reserve(capacity); }
+
+void IGSharp_TextBuffer_Append(void* buf, const char* str, const char* str_end)
+{ ((ImGuiTextBuffer*)buf)->append(str, str_end); }
+
+// --- Storage ---
+
+void* IGSharp_Storage_New(void)                 { return new ImGuiStorage(); }
+void IGSharp_Storage_Delete(void* storage)      { delete (ImGuiStorage*)storage; }
+void IGSharp_Storage_Clear(void* storage)       { ((ImGuiStorage*)storage)->Clear(); }
+
+int IGSharp_Storage_GetInt(void* storage, unsigned int key, int default_val)
+{ return ((ImGuiStorage*)storage)->GetInt(key, default_val); }
+void IGSharp_Storage_SetInt(void* storage, unsigned int key, int val)
+{ ((ImGuiStorage*)storage)->SetInt(key, val); }
+
+bool IGSharp_Storage_GetBool(void* storage, unsigned int key, bool default_val)
+{ return ((ImGuiStorage*)storage)->GetBool(key, default_val); }
+void IGSharp_Storage_SetBool(void* storage, unsigned int key, bool val)
+{ ((ImGuiStorage*)storage)->SetBool(key, val); }
+
+float IGSharp_Storage_GetFloat(void* storage, unsigned int key, float default_val)
+{ return ((ImGuiStorage*)storage)->GetFloat(key, default_val); }
+void IGSharp_Storage_SetFloat(void* storage, unsigned int key, float val)
+{ ((ImGuiStorage*)storage)->SetFloat(key, val); }
+
+void* IGSharp_Storage_GetVoidPtr(void* storage, unsigned int key)
+{ return ((ImGuiStorage*)storage)->GetVoidPtr(key); }
+void IGSharp_Storage_SetVoidPtr(void* storage, unsigned int key, void* val)
+{ ((ImGuiStorage*)storage)->SetVoidPtr(key, val); }
+
+int* IGSharp_Storage_GetIntRef(void* storage, unsigned int key, int default_val)
+{ return ((ImGuiStorage*)storage)->GetIntRef(key, default_val); }
+bool* IGSharp_Storage_GetBoolRef(void* storage, unsigned int key, bool default_val)
+{ return ((ImGuiStorage*)storage)->GetBoolRef(key, default_val); }
+float* IGSharp_Storage_GetFloatRef(void* storage, unsigned int key, float default_val)
+{ return ((ImGuiStorage*)storage)->GetFloatRef(key, default_val); }
+void** IGSharp_Storage_GetVoidPtrRef(void* storage, unsigned int key, void* default_val)
+{ return ((ImGuiStorage*)storage)->GetVoidPtrRef(key, default_val); }
+
+void IGSharp_Storage_BuildSortByKey(void* storage)  { ((ImGuiStorage*)storage)->BuildSortByKey(); }
+void IGSharp_Storage_SetAllInt(void* storage, int val) { ((ImGuiStorage*)storage)->SetAllInt(val); }
+
+// --- ImGuiListClipper (UserIndex accessor gap) ---
+int IGSharp_ListClipper_GetUserIndex(void* clipper) { return ((ImGuiListClipper*)clipper)->UserIndex; }
+void IGSharp_ListClipper_SetUserIndex(void* clipper, int user_index) { ((ImGuiListClipper*)clipper)->UserIndex = user_index; }
+
+// --- ImGuiSelectionBasicStorage (opaque handle + accessors) ---
+
+#define SBS(p) ((ImGuiSelectionBasicStorage*)(p))
+void*        IGSharp_SelectionBasicStorage_Create(void)                  { return new ImGuiSelectionBasicStorage(); }
+void         IGSharp_SelectionBasicStorage_Destroy(void* s)             { delete SBS(s); }
+void         IGSharp_SelectionBasicStorage_ApplyRequests(void* s, void* ms_io) { SBS(s)->ApplyRequests((ImGuiMultiSelectIO*)ms_io); }
+bool         IGSharp_SelectionBasicStorage_Contains(void* s, unsigned int id)  { return SBS(s)->Contains((ImGuiID)id); }
+void         IGSharp_SelectionBasicStorage_Clear(void* s)              { SBS(s)->Clear(); }
+void         IGSharp_SelectionBasicStorage_SetItemSelected(void* s, unsigned int id, bool selected) { SBS(s)->SetItemSelected((ImGuiID)id, selected); }
+bool         IGSharp_SelectionBasicStorage_GetNextSelectedItem(void* s, void** opaque_it, unsigned int* out_id)
+{ return SBS(s)->GetNextSelectedItem(opaque_it, (ImGuiID*)out_id); }
+unsigned int IGSharp_SelectionBasicStorage_GetStorageIdFromIndex(void* s, int idx) { return (unsigned int)SBS(s)->GetStorageIdFromIndex(idx); }
+int          IGSharp_SelectionBasicStorage_GetSize(void* s)            { return SBS(s)->Size; }
+bool         IGSharp_SelectionBasicStorage_GetPreserveOrder(void* s)   { return SBS(s)->PreserveOrder; }
+void         IGSharp_SelectionBasicStorage_SetPreserveOrder(void* s, bool v) { SBS(s)->PreserveOrder = v; }
+void*        IGSharp_SelectionBasicStorage_GetUserData(void* s)        { return SBS(s)->UserData; }
+void         IGSharp_SelectionBasicStorage_SetUserData(void* s, void* v) { SBS(s)->UserData = v; }
+#undef SBS
+
+// --- SelectionExternalStorage (opaque helper) ---
+
+#define SES(p) ((ImGuiSelectionExternalStorage*)(p))
+void* IGSharp_SelectionExternalStorage_Create(void)                       { return IM_NEW(ImGuiSelectionExternalStorage)(); }
+void  IGSharp_SelectionExternalStorage_Destroy(void* storage)             { IM_DELETE(SES(storage)); }
+void* IGSharp_SelectionExternalStorage_GetUserData(void* storage)         { return SES(storage)->UserData; }
+void  IGSharp_SelectionExternalStorage_SetUserData(void* storage, void* user_data) { SES(storage)->UserData = user_data; }
+void  IGSharp_SelectionExternalStorage_SetAdapterSetItemSelected(void* storage, IGSharp_SelectionExternalStorageAdapter adapter)
+{ SES(storage)->AdapterSetItemSelected = (void (*)(ImGuiSelectionExternalStorage*, int, bool))adapter; }
+void  IGSharp_SelectionExternalStorage_ApplyRequests(void* storage, void* ms_io) { SES(storage)->ApplyRequests((ImGuiMultiSelectIO*)ms_io); }
+#undef SES
+
+// --- struct-ImDrawData (ImDrawData) ---
+// --- ImDrawData: Accessors ---
+
+static inline ImDrawData* DD(void* p) { return (ImDrawData*)p; }
+
+bool         IGSharp_DrawData_GetValid(void* draw_data)            { return DD(draw_data)->Valid; }
+int          IGSharp_DrawData_GetCmdListsCount(void* draw_data)    { return DD(draw_data)->CmdListsCount; }
+int          IGSharp_DrawData_GetTotalIdxCount(void* draw_data)    { return DD(draw_data)->TotalIdxCount; }
+int          IGSharp_DrawData_GetTotalVtxCount(void* draw_data)    { return DD(draw_data)->TotalVtxCount; }
+void* IGSharp_DrawData_GetCmdList(void* draw_data, int index)
+{
+    ImDrawData* d = DD(draw_data);
+    if (index < 0 || index >= d->CmdLists.Size) return nullptr;
+    return d->CmdLists[index];
+}
+IGSharp_Vec2 IGSharp_DrawData_GetDisplayPos(void* draw_data)       { return FromImVec2(DD(draw_data)->DisplayPos); }
+IGSharp_Vec2 IGSharp_DrawData_GetDisplaySize(void* draw_data)      { return FromImVec2(DD(draw_data)->DisplaySize); }
+IGSharp_Vec2 IGSharp_DrawData_GetFramebufferScale(void* draw_data) { return FromImVec2(DD(draw_data)->FramebufferScale); }
+void*        IGSharp_DrawData_GetOwnerViewport(void* draw_data)    { return DD(draw_data)->OwnerViewport; }
+void         IGSharp_DrawData_Clear(void* draw_data)               { DD(draw_data)->Clear(); }
+void         IGSharp_DrawData_AddDrawList(void* draw_data, void* draw_list) { DD(draw_data)->AddDrawList(DL(draw_list)); }
+void         IGSharp_DrawData_DeIndexAllBuffers(void* draw_data)   { DD(draw_data)->DeIndexAllBuffers(); }
+void         IGSharp_DrawData_ScaleClipRects(void* draw_data, IGSharp_Vec2 fb_scale) { DD(draw_data)->ScaleClipRects(ToImVec2(fb_scale)); }
+
+// --- struct-ImDrawCmd (ImDrawCmd) ---
+// ImDrawCmd: accessors (not mirrored: contains ImTextureRef and requires the GetTexID() getter)
+static inline ImDrawCmd* DC(void* p) { return (ImDrawCmd*)p; }
+
+IGSharp_Vec4 IGSharp_DrawCmd_GetClipRect(void* dc)
+{ const ImVec4& r = DC(dc)->ClipRect; return { r.x, r.y, r.z, r.w }; }
+unsigned long long IGSharp_DrawCmd_GetTexID(void* dc)        { return (unsigned long long)DC(dc)->GetTexID(); }
+unsigned int IGSharp_DrawCmd_GetVtxOffset(void* dc)          { return DC(dc)->VtxOffset; }
+unsigned int IGSharp_DrawCmd_GetIdxOffset(void* dc)          { return DC(dc)->IdxOffset; }
+unsigned int IGSharp_DrawCmd_GetElemCount(void* dc)          { return DC(dc)->ElemCount; }
+void* IGSharp_DrawCmd_GetUserCallback(void* dc)              { return (void*)DC(dc)->UserCallback; }
+void* IGSharp_DrawCmd_GetUserCallbackData(void* dc)          { return DC(dc)->UserCallbackData; }
+int IGSharp_DrawCmd_GetUserCallbackDataSize(void* dc)        { return DC(dc)->UserCallbackDataSize; }
+
+// --- struct-ImDrawListSplitter (ImDrawListSplitter (accessors)) ---
+// ImDrawListSplitter (opaque handle)
+static inline ImDrawListSplitter* DLS(void* p) { return (ImDrawListSplitter*)p; }
+
+void* IGSharp_DrawListSplitter_Create(void)                  { return IM_NEW(ImDrawListSplitter)(); }
+void  IGSharp_DrawListSplitter_Destroy(void* splitter)       { IM_DELETE(DLS(splitter)); }
+void  IGSharp_DrawListSplitter_Clear(void* splitter)         { DLS(splitter)->Clear(); }
+void  IGSharp_DrawListSplitter_ClearFreeMemory(void* splitter){ DLS(splitter)->ClearFreeMemory(); }
+void  IGSharp_DrawListSplitter_Split(void* splitter, void* draw_list, int count)
+    { DLS(splitter)->Split((ImDrawList*)draw_list, count); }
+void  IGSharp_DrawListSplitter_Merge(void* splitter, void* draw_list)
+    { DLS(splitter)->Merge((ImDrawList*)draw_list); }
+void  IGSharp_DrawListSplitter_SetCurrentChannel(void* splitter, void* draw_list, int channel_idx)
+    { DLS(splitter)->SetCurrentChannel((ImDrawList*)draw_list, channel_idx); }
+
+// --- fn-drawlist-members (ImDrawList remaining member functions) ---
+// --- DrawList: Texture state ---
+
+void IGSharp_DrawList_PushTexture(void* dl, unsigned long long tex_id)
+{ DL(dl)->PushTexture(ImTextureRef((ImTextureID)tex_id)); }
+
+void IGSharp_DrawList_PopTexture(void* dl)                         { DL(dl)->PopTexture(); }
+
+// --- DrawList: Clip rect query ---
+
+IGSharp_Vec2 IGSharp_DrawList_GetClipRectMin(void* dl)            { return FromImVec2(DL(dl)->GetClipRectMin()); }
+IGSharp_Vec2 IGSharp_DrawList_GetClipRectMax(void* dl)            { return FromImVec2(DL(dl)->GetClipRectMax()); }
+
+// --- DrawList: Text with explicit font ---
+
+void IGSharp_DrawList_AddTextFont(void* dl, void* font, float font_size, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end, float wrap_width, const IGSharp_Vec4* cpu_fine_clip_rect)
+{ DL(dl)->AddText((ImFont*)font, font_size, ToImVec2(pos), col, text_begin, text_end, wrap_width, (const ImVec4*)cpu_fine_clip_rect); }
+
+// --- DrawList: Path API (additions) ---
+
+void IGSharp_DrawList_PathFillConcave(void* dl, unsigned int col) { DL(dl)->PathFillConcave(col); }
+
+void IGSharp_DrawList_PathEllipticalArcTo(void* dl, IGSharp_Vec2 center, IGSharp_Vec2 radius, float rot, float a_min, float a_max, int num_segments)
+{ DL(dl)->PathEllipticalArcTo(ToImVec2(center), ToImVec2(radius), rot, a_min, a_max, num_segments); }
+
+// --- DrawList: Advanced (callbacks, draw commands, cloning) ---
+
+void IGSharp_DrawList_AddCallback(void* dl, void* callback, void* userdata, size_t userdata_size)
+{ DL(dl)->AddCallback((ImDrawCallback)callback, userdata, userdata_size); }
+
+void IGSharp_DrawList_AddDrawCmd(void* dl)                        { DL(dl)->AddDrawCmd(); }
+
+void* IGSharp_DrawList_CloneOutput(void* dl)                      { return (void*)DL(dl)->CloneOutput(); }
+
+// --- DrawList: Channels splitting/merging ---
+
+void IGSharp_DrawList_ChannelsSplit(void* dl, int count)         { DL(dl)->ChannelsSplit(count); }
+void IGSharp_DrawList_ChannelsMerge(void* dl)                    { DL(dl)->ChannelsMerge(); }
+void IGSharp_DrawList_ChannelsSetCurrent(void* dl, int n)        { DL(dl)->ChannelsSetCurrent(n); }
+
+// --- fn-drawlist-prim (ImDrawList low-level Prim/buffer access) ---
+// --- ImDrawList: Advanced primitives allocations ---
+
+void IGSharp_DrawList_PrimReserve(void* dl, int idx_count, int vtx_count)
+{ DL(dl)->PrimReserve(idx_count, vtx_count); }
+void IGSharp_DrawList_PrimUnreserve(void* dl, int idx_count, int vtx_count)
+{ DL(dl)->PrimUnreserve(idx_count, vtx_count); }
+void IGSharp_DrawList_PrimRect(void* dl, IGSharp_Vec2 a, IGSharp_Vec2 b, unsigned int col)
+{ DL(dl)->PrimRect(ToImVec2(a), ToImVec2(b), col); }
+void IGSharp_DrawList_PrimRectUV(void* dl, IGSharp_Vec2 a, IGSharp_Vec2 b, IGSharp_Vec2 uv_a, IGSharp_Vec2 uv_b, unsigned int col)
+{ DL(dl)->PrimRectUV(ToImVec2(a), ToImVec2(b), ToImVec2(uv_a), ToImVec2(uv_b), col); }
+void IGSharp_DrawList_PrimQuadUV(void* dl, IGSharp_Vec2 a, IGSharp_Vec2 b, IGSharp_Vec2 c, IGSharp_Vec2 d, IGSharp_Vec2 uv_a, IGSharp_Vec2 uv_b, IGSharp_Vec2 uv_c, IGSharp_Vec2 uv_d, unsigned int col)
+{ DL(dl)->PrimQuadUV(ToImVec2(a), ToImVec2(b), ToImVec2(c), ToImVec2(d), ToImVec2(uv_a), ToImVec2(uv_b), ToImVec2(uv_c), ToImVec2(uv_d), col); }
+void IGSharp_DrawList_PrimWriteVtx(void* dl, IGSharp_Vec2 pos, IGSharp_Vec2 uv, unsigned int col)
+{ DL(dl)->PrimWriteVtx(ToImVec2(pos), ToImVec2(uv), col); }
+void IGSharp_DrawList_PrimWriteIdx(void* dl, unsigned short idx)
+{ DL(dl)->PrimWriteIdx((ImDrawIdx)idx); }
+void IGSharp_DrawList_PrimVtx(void* dl, IGSharp_Vec2 pos, IGSharp_Vec2 uv, unsigned int col)
+{ DL(dl)->PrimVtx(ToImVec2(pos), ToImVec2(uv), col); }
+
+// --- ImDrawList: Buffer / flag access ---
+
+int   IGSharp_DrawList_GetFlags(void* dl)              { return (int)DL(dl)->Flags; }
+void  IGSharp_DrawList_SetFlags(void* dl, int flags)   { DL(dl)->Flags = (ImDrawListFlags)flags; }
+int   IGSharp_DrawList_GetCmdBufferSize(void* dl)      { return DL(dl)->CmdBuffer.Size; }
+void* IGSharp_DrawList_GetCmdBufferData(void* dl)      { return (void*)DL(dl)->CmdBuffer.Data; }
+int   IGSharp_DrawList_GetIdxBufferSize(void* dl)      { return DL(dl)->IdxBuffer.Size; }
+void* IGSharp_DrawList_GetIdxBufferData(void* dl)      { return (void*)DL(dl)->IdxBuffer.Data; }
+int   IGSharp_DrawList_GetVtxBufferSize(void* dl)      { return DL(dl)->VtxBuffer.Size; }
+void* IGSharp_DrawList_GetVtxBufferData(void* dl)      { return (void*)DL(dl)->VtxBuffer.Data; }
+
+// --- ImTextureData accessors ---
+// ImTextureData accessors (backend-facing struct; not mirrored)
+static inline ImTextureData* TD(void* p) { return (ImTextureData*)p; }
+
+int   IGSharp_TextureData_GetUniqueID(void* tex_data)        { return TD(tex_data)->UniqueID; }
+int   IGSharp_TextureData_GetStatus(void* tex_data)          { return (int)TD(tex_data)->Status; }
+void* IGSharp_TextureData_GetBackendUserData(void* tex_data) { return TD(tex_data)->BackendUserData; }
+void  IGSharp_TextureData_SetBackendUserData(void* tex_data, void* backend_user_data) { TD(tex_data)->BackendUserData = backend_user_data; }
+unsigned long long IGSharp_TextureData_GetTexID(void* tex_data) { return (unsigned long long)TD(tex_data)->TexID; }
+int   IGSharp_TextureData_GetFormat(void* tex_data)          { return (int)TD(tex_data)->Format; }
+int   IGSharp_TextureData_GetWidth(void* tex_data)           { return TD(tex_data)->Width; }
+int   IGSharp_TextureData_GetHeight(void* tex_data)          { return TD(tex_data)->Height; }
+int   IGSharp_TextureData_GetBytesPerPixel(void* tex_data)   { return TD(tex_data)->BytesPerPixel; }
+unsigned char* IGSharp_TextureData_GetPixels(void* tex_data) { return TD(tex_data)->Pixels; }
+
+void  IGSharp_TextureData_GetUsedRect(void* tex_data, unsigned short* x, unsigned short* y, unsigned short* w, unsigned short* h)
+{
+    const ImTextureRect& r = TD(tex_data)->UsedRect;
+    if (x) *x = r.x; if (y) *y = r.y; if (w) *w = r.w; if (h) *h = r.h;
+}
+void  IGSharp_TextureData_GetUpdateRect(void* tex_data, unsigned short* x, unsigned short* y, unsigned short* w, unsigned short* h)
+{
+    const ImTextureRect& r = TD(tex_data)->UpdateRect;
+    if (x) *x = r.x; if (y) *y = r.y; if (w) *w = r.w; if (h) *h = r.h;
+}
+
+int            IGSharp_TextureData_GetUnusedFrames(void* tex_data) { return TD(tex_data)->UnusedFrames; }
+unsigned short IGSharp_TextureData_GetRefCount(void* tex_data)     { return TD(tex_data)->RefCount; }
+bool           IGSharp_TextureData_GetUseColors(void* tex_data)    { return TD(tex_data)->UseColors; }
+
+void  IGSharp_TextureData_Create(void* tex_data, int format, int w, int h) { TD(tex_data)->Create((ImTextureFormat)format, w, h); }
+void  IGSharp_TextureData_DestroyPixels(void* tex_data)      { TD(tex_data)->DestroyPixels(); }
+void* IGSharp_TextureData_GetPixelsPtr(void* tex_data)       { return TD(tex_data)->GetPixels(); }
+void* IGSharp_TextureData_GetPixelsAt(void* tex_data, int x, int y) { return TD(tex_data)->GetPixelsAt(x, y); }
+int   IGSharp_TextureData_GetSizeInBytes(void* tex_data)     { return TD(tex_data)->GetSizeInBytes(); }
+int   IGSharp_TextureData_GetPitch(void* tex_data)           { return TD(tex_data)->GetPitch(); }
+void  IGSharp_TextureData_SetTexID(void* tex_data, unsigned long long tex_id) { TD(tex_data)->SetTexID((ImTextureID)tex_id); }
+void  IGSharp_TextureData_SetStatus(void* tex_data, int status) { TD(tex_data)->SetStatus((ImTextureStatus)status); }
+
+// --- ImFontConfig (accessors) ---
+// --- ImFontConfig: Lifetime + accessors ---
+
+static inline ImFontConfig* FC(void* p) { return (ImFontConfig*)p; }
+
+void* IGSharp_FontConfig_Create(void)        { return IM_NEW(ImFontConfig)(); }
+void  IGSharp_FontConfig_Destroy(void* cfg)  { IM_DELETE(FC(cfg)); }
+
+const char* IGSharp_FontConfig_GetName(void* cfg)              { return FC(cfg)->Name; }
+void        IGSharp_FontConfig_SetName(void* cfg, const char* name)
+{
+    ImFontConfig* c = FC(cfg);
+    if (name == nullptr) { c->Name[0] = '\0'; return; }
+    const size_t cap = sizeof(c->Name);
+    size_t i = 0;
+    for (; i + 1 < cap && name[i] != '\0'; i++)
+        c->Name[i] = name[i];
+    c->Name[i] = '\0';
+}
+void*       IGSharp_FontConfig_GetFontData(void* cfg)          { return FC(cfg)->FontData; }
+void        IGSharp_FontConfig_SetFontData(void* cfg, void* font_data) { FC(cfg)->FontData = font_data; }
+int         IGSharp_FontConfig_GetFontDataSize(void* cfg)      { return FC(cfg)->FontDataSize; }
+void        IGSharp_FontConfig_SetFontDataSize(void* cfg, int font_data_size) { FC(cfg)->FontDataSize = font_data_size; }
+bool        IGSharp_FontConfig_GetFontDataOwnedByAtlas(void* cfg) { return FC(cfg)->FontDataOwnedByAtlas; }
+void        IGSharp_FontConfig_SetFontDataOwnedByAtlas(void* cfg, bool value) { FC(cfg)->FontDataOwnedByAtlas = value; }
+bool        IGSharp_FontConfig_GetMergeMode(void* cfg)         { return FC(cfg)->MergeMode; }
+void        IGSharp_FontConfig_SetMergeMode(void* cfg, bool value) { FC(cfg)->MergeMode = value; }
+bool        IGSharp_FontConfig_GetPixelSnapH(void* cfg)        { return FC(cfg)->PixelSnapH; }
+void        IGSharp_FontConfig_SetPixelSnapH(void* cfg, bool value) { FC(cfg)->PixelSnapH = value; }
+int         IGSharp_FontConfig_GetOversampleH(void* cfg)       { return (int)FC(cfg)->OversampleH; }
+void        IGSharp_FontConfig_SetOversampleH(void* cfg, int value) { FC(cfg)->OversampleH = (ImS8)value; }
+int         IGSharp_FontConfig_GetOversampleV(void* cfg)       { return (int)FC(cfg)->OversampleV; }
+void        IGSharp_FontConfig_SetOversampleV(void* cfg, int value) { FC(cfg)->OversampleV = (ImS8)value; }
+unsigned short IGSharp_FontConfig_GetEllipsisChar(void* cfg)   { return (unsigned short)FC(cfg)->EllipsisChar; }
+void           IGSharp_FontConfig_SetEllipsisChar(void* cfg, unsigned short value) { FC(cfg)->EllipsisChar = (ImWchar)value; }
+float       IGSharp_FontConfig_GetSizePixels(void* cfg)        { return FC(cfg)->SizePixels; }
+void        IGSharp_FontConfig_SetSizePixels(void* cfg, float value) { FC(cfg)->SizePixels = value; }
+const unsigned short* IGSharp_FontConfig_GetGlyphRanges(void* cfg) { return (const unsigned short*)FC(cfg)->GlyphRanges; }
+void                  IGSharp_FontConfig_SetGlyphRanges(void* cfg, const unsigned short* ranges) { FC(cfg)->GlyphRanges = (const ImWchar*)ranges; }
+const unsigned short* IGSharp_FontConfig_GetGlyphExcludeRanges(void* cfg) { return (const unsigned short*)FC(cfg)->GlyphExcludeRanges; }
+void                  IGSharp_FontConfig_SetGlyphExcludeRanges(void* cfg, const unsigned short* ranges) { FC(cfg)->GlyphExcludeRanges = (const ImWchar*)ranges; }
+IGSharp_Vec2 IGSharp_FontConfig_GetGlyphOffset(void* cfg)      { return FromImVec2(FC(cfg)->GlyphOffset); }
+void         IGSharp_FontConfig_SetGlyphOffset(void* cfg, IGSharp_Vec2 value) { FC(cfg)->GlyphOffset = ToImVec2(value); }
+float       IGSharp_FontConfig_GetGlyphMinAdvanceX(void* cfg)  { return FC(cfg)->GlyphMinAdvanceX; }
+void        IGSharp_FontConfig_SetGlyphMinAdvanceX(void* cfg, float value) { FC(cfg)->GlyphMinAdvanceX = value; }
+float       IGSharp_FontConfig_GetGlyphMaxAdvanceX(void* cfg)  { return FC(cfg)->GlyphMaxAdvanceX; }
+void        IGSharp_FontConfig_SetGlyphMaxAdvanceX(void* cfg, float value) { FC(cfg)->GlyphMaxAdvanceX = value; }
+float       IGSharp_FontConfig_GetGlyphExtraAdvanceX(void* cfg) { return FC(cfg)->GlyphExtraAdvanceX; }
+void        IGSharp_FontConfig_SetGlyphExtraAdvanceX(void* cfg, float value) { FC(cfg)->GlyphExtraAdvanceX = value; }
+unsigned int IGSharp_FontConfig_GetFontNo(void* cfg)           { return (unsigned int)FC(cfg)->FontNo; }
+void         IGSharp_FontConfig_SetFontNo(void* cfg, unsigned int value) { FC(cfg)->FontNo = (ImU32)value; }
+unsigned int IGSharp_FontConfig_GetFontLoaderFlags(void* cfg)  { return FC(cfg)->FontLoaderFlags; }
+void         IGSharp_FontConfig_SetFontLoaderFlags(void* cfg, unsigned int value) { FC(cfg)->FontLoaderFlags = value; }
+float       IGSharp_FontConfig_GetRasterizerMultiply(void* cfg) { return FC(cfg)->RasterizerMultiply; }
+void        IGSharp_FontConfig_SetRasterizerMultiply(void* cfg, float value) { FC(cfg)->RasterizerMultiply = value; }
+float       IGSharp_FontConfig_GetRasterizerDensity(void* cfg) { return FC(cfg)->RasterizerDensity; }
+void        IGSharp_FontConfig_SetRasterizerDensity(void* cfg, float value) { FC(cfg)->RasterizerDensity = value; }
+float       IGSharp_FontConfig_GetExtraSizeScale(void* cfg)    { return FC(cfg)->ExtraSizeScale; }
+void        IGSharp_FontConfig_SetExtraSizeScale(void* cfg, float value) { FC(cfg)->ExtraSizeScale = value; }
+
+// --- ImFontGlyph (accessors) ---
+bool  IGSharp_FontGlyph_GetColored(void* glyph)      { return ((ImFontGlyph*)glyph)->Colored != 0; }
+bool  IGSharp_FontGlyph_GetVisible(void* glyph)      { return ((ImFontGlyph*)glyph)->Visible != 0; }
+int   IGSharp_FontGlyph_GetSourceIdx(void* glyph)    { return (int)((ImFontGlyph*)glyph)->SourceIdx; }
+unsigned int IGSharp_FontGlyph_GetCodepoint(void* glyph) { return ((ImFontGlyph*)glyph)->Codepoint; }
+float IGSharp_FontGlyph_GetAdvanceX(void* glyph)     { return ((ImFontGlyph*)glyph)->AdvanceX; }
+float IGSharp_FontGlyph_GetX0(void* glyph)           { return ((ImFontGlyph*)glyph)->X0; }
+float IGSharp_FontGlyph_GetY0(void* glyph)           { return ((ImFontGlyph*)glyph)->Y0; }
+float IGSharp_FontGlyph_GetX1(void* glyph)           { return ((ImFontGlyph*)glyph)->X1; }
+float IGSharp_FontGlyph_GetY1(void* glyph)           { return ((ImFontGlyph*)glyph)->Y1; }
+float IGSharp_FontGlyph_GetU0(void* glyph)           { return ((ImFontGlyph*)glyph)->U0; }
+float IGSharp_FontGlyph_GetV0(void* glyph)           { return ((ImFontGlyph*)glyph)->V0; }
+float IGSharp_FontGlyph_GetU1(void* glyph)           { return ((ImFontGlyph*)glyph)->U1; }
+float IGSharp_FontGlyph_GetV1(void* glyph)           { return ((ImFontGlyph*)glyph)->V1; }
+
+// --- ImFontGlyphRangesBuilder ---
+
+void* IGSharp_FontGlyphRangesBuilder_New(void)        { return new ImFontGlyphRangesBuilder(); }
+void  IGSharp_FontGlyphRangesBuilder_Delete(void* builder) { delete (ImFontGlyphRangesBuilder*)builder; }
+
+void  IGSharp_FontGlyphRangesBuilder_Clear(void* builder)  { ((ImFontGlyphRangesBuilder*)builder)->Clear(); }
+bool  IGSharp_FontGlyphRangesBuilder_GetBit(void* builder, size_t n) { return ((ImFontGlyphRangesBuilder*)builder)->GetBit(n); }
+void  IGSharp_FontGlyphRangesBuilder_SetBit(void* builder, size_t n) { ((ImFontGlyphRangesBuilder*)builder)->SetBit(n); }
+void  IGSharp_FontGlyphRangesBuilder_AddChar(void* builder, unsigned short c) { ((ImFontGlyphRangesBuilder*)builder)->AddChar((ImWchar)c); }
+
+void  IGSharp_FontGlyphRangesBuilder_AddText(void* builder, const char* text, const char* text_end)
+{ ((ImFontGlyphRangesBuilder*)builder)->AddText(text, text_end); }
+
+void  IGSharp_FontGlyphRangesBuilder_AddRanges(void* builder, const unsigned short* ranges)
+{ ((ImFontGlyphRangesBuilder*)builder)->AddRanges((const ImWchar*)ranges); }
+
+int   IGSharp_FontGlyphRangesBuilder_BuildRanges(void* builder, unsigned short* out_ranges, int out_ranges_capacity)
+{
+    ImVector<ImWchar> tmp;
+    ((ImFontGlyphRangesBuilder*)builder)->BuildRanges(&tmp);
+    int count = tmp.Size;
+    int copy_count = count < out_ranges_capacity ? count : out_ranges_capacity;
+    for (int i = 0; i < copy_count; i++)
+        out_ranges[i] = (unsigned short)tmp[i];
+    return count;
+}
+
+// --- ImFontAtlas font construction & lifecycle ---
+void* IGSharp_FontAtlas_AddFont(void* atlas, const void* font_cfg)
+{ return ((ImFontAtlas*)atlas)->AddFont((const ImFontConfig*)font_cfg); }
+
+void* IGSharp_FontAtlas_AddFontDefaultVector(void* atlas)
+{ return ((ImFontAtlas*)atlas)->AddFontDefaultVector(); }
+
+void* IGSharp_FontAtlas_AddFontDefaultBitmap(void* atlas)
+{ return ((ImFontAtlas*)atlas)->AddFontDefaultBitmap(); }
+
+void* IGSharp_FontAtlas_AddFontFromMemoryCompressedBase85TTF(void* atlas, const char* compressed_data_base85, float size_pixels)
+{ return ((ImFontAtlas*)atlas)->AddFontFromMemoryCompressedBase85TTF(compressed_data_base85, size_pixels); }
+
+void IGSharp_FontAtlas_RemoveFont(void* atlas, void* font)
+{ ((ImFontAtlas*)atlas)->RemoveFont((ImFont*)font); }
+
+void IGSharp_FontAtlas_CompactCache(void* atlas)
+{ ((ImFontAtlas*)atlas)->CompactCache(); }
+
+void IGSharp_FontAtlas_SetFontLoader(void* atlas, const void* font_loader)
+{ ((ImFontAtlas*)atlas)->SetFontLoader((const ImFontLoader*)font_loader); }
+
+void IGSharp_FontAtlas_ClearInputData(void* atlas)
+{ ((ImFontAtlas*)atlas)->ClearInputData(); }
+
+void IGSharp_FontAtlas_ClearTexData(void* atlas)
+{ ((ImFontAtlas*)atlas)->ClearTexData(); }
+
+const unsigned short* IGSharp_FontAtlas_GetGlyphRangesDefault(void* atlas)
+{ return (const unsigned short*)((ImFontAtlas*)atlas)->GetGlyphRangesDefault(); }
+
+// --- ImFontAtlas custom rectangles ---
+// --- Fonts: Custom rectangles ---
+
+int IGSharp_FontAtlas_AddCustomRect(void* atlas, int width, int height, IGSharp_FontAtlasRect* out_r)
+{ return ((ImFontAtlas*)atlas)->AddCustomRect(width, height, reinterpret_cast<ImFontAtlasRect*>(out_r)); }
+
+void IGSharp_FontAtlas_RemoveCustomRect(void* atlas, int id)
+{ ((ImFontAtlas*)atlas)->RemoveCustomRect(id); }
+
+bool IGSharp_FontAtlas_GetCustomRect(void* atlas, int id, IGSharp_FontAtlasRect* out_r)
+{ return ((ImFontAtlas*)atlas)->GetCustomRect(id, reinterpret_cast<ImFontAtlasRect*>(out_r)); }
+
+// --- ImFontAtlas member field accessors ---
+int  IGSharp_FontAtlas_GetFlags(void* atlas)                 { return (int)((ImFontAtlas*)atlas)->Flags; }
+void IGSharp_FontAtlas_SetFlags(void* atlas, int flags)      { ((ImFontAtlas*)atlas)->Flags = (ImFontAtlasFlags)flags; }
+int  IGSharp_FontAtlas_GetTexDesiredFormat(void* atlas)      { return (int)((ImFontAtlas*)atlas)->TexDesiredFormat; }
+void IGSharp_FontAtlas_SetTexDesiredFormat(void* atlas, int format) { ((ImFontAtlas*)atlas)->TexDesiredFormat = (ImTextureFormat)format; }
+int  IGSharp_FontAtlas_GetTexGlyphPadding(void* atlas)       { return ((ImFontAtlas*)atlas)->TexGlyphPadding; }
+void IGSharp_FontAtlas_SetTexGlyphPadding(void* atlas, int padding) { ((ImFontAtlas*)atlas)->TexGlyphPadding = padding; }
+int  IGSharp_FontAtlas_GetTexMinWidth(void* atlas)           { return ((ImFontAtlas*)atlas)->TexMinWidth; }
+void IGSharp_FontAtlas_SetTexMinWidth(void* atlas, int width){ ((ImFontAtlas*)atlas)->TexMinWidth = width; }
+int  IGSharp_FontAtlas_GetTexMinHeight(void* atlas)          { return ((ImFontAtlas*)atlas)->TexMinHeight; }
+void IGSharp_FontAtlas_SetTexMinHeight(void* atlas, int height) { ((ImFontAtlas*)atlas)->TexMinHeight = height; }
+int  IGSharp_FontAtlas_GetTexMaxWidth(void* atlas)           { return ((ImFontAtlas*)atlas)->TexMaxWidth; }
+void IGSharp_FontAtlas_SetTexMaxWidth(void* atlas, int width){ ((ImFontAtlas*)atlas)->TexMaxWidth = width; }
+int  IGSharp_FontAtlas_GetTexMaxHeight(void* atlas)          { return ((ImFontAtlas*)atlas)->TexMaxHeight; }
+void IGSharp_FontAtlas_SetTexMaxHeight(void* atlas, int height) { ((ImFontAtlas*)atlas)->TexMaxHeight = height; }
+void* IGSharp_FontAtlas_GetUserData(void* atlas)             { return ((ImFontAtlas*)atlas)->UserData; }
+void IGSharp_FontAtlas_SetUserData(void* atlas, void* user_data) { ((ImFontAtlas*)atlas)->UserData = user_data; }
+unsigned long long IGSharp_FontAtlas_GetTexRef(void* atlas)  { return (unsigned long long)((ImFontAtlas*)atlas)->TexRef.GetTexID(); }
+void* IGSharp_FontAtlas_GetTexData(void* atlas)              { return ((ImFontAtlas*)atlas)->TexData; }
+bool IGSharp_FontAtlas_GetTexPixelsUseColors(void* atlas)    { return ((ImFontAtlas*)atlas)->TexPixelsUseColors; }
+IGSharp_Vec2 IGSharp_FontAtlas_GetTexUvScale(void* atlas)    { return FromImVec2(((ImFontAtlas*)atlas)->TexUvScale); }
+IGSharp_Vec2 IGSharp_FontAtlas_GetTexUvWhitePixel(void* atlas) { return FromImVec2(((ImFontAtlas*)atlas)->TexUvWhitePixel); }
+
+// --- ImFontBaked accessors & methods ---
+
+void* IGSharp_FontBaked_FindGlyph(void* baked, unsigned short c)
+{ return ((ImFontBaked*)baked)->FindGlyph((ImWchar)c); }
+void* IGSharp_FontBaked_FindGlyphNoFallback(void* baked, unsigned short c)
+{ return ((ImFontBaked*)baked)->FindGlyphNoFallback((ImWchar)c); }
+float IGSharp_FontBaked_GetCharAdvance(void* baked, unsigned short c)
+{ return ((ImFontBaked*)baked)->GetCharAdvance((ImWchar)c); }
+bool  IGSharp_FontBaked_IsGlyphLoaded(void* baked, unsigned short c)
+{ return ((ImFontBaked*)baked)->IsGlyphLoaded((ImWchar)c); }
+
+float IGSharp_FontBaked_GetSize(void* baked)             { return ((ImFontBaked*)baked)->Size; }
+float IGSharp_FontBaked_GetAscent(void* baked)           { return ((ImFontBaked*)baked)->Ascent; }
+float IGSharp_FontBaked_GetDescent(void* baked)          { return ((ImFontBaked*)baked)->Descent; }
+float IGSharp_FontBaked_GetFallbackAdvanceX(void* baked) { return ((ImFontBaked*)baked)->FallbackAdvanceX; }
+
+// --- ImFont accessors & methods ---
+// --- Fonts: ImFont methods & field accessors ---
+
+static inline ImFont* FONT(void* p) { return (ImFont*)p; }
+
+bool IGSharp_Font_IsGlyphInFont(void* font, unsigned short c)
+{ return FONT(font)->IsGlyphInFont((ImWchar)c); }
+
+bool IGSharp_Font_IsLoaded(void* font)              { return FONT(font)->IsLoaded(); }
+const char* IGSharp_Font_GetDebugName(void* font)   { return FONT(font)->GetDebugName(); }
+
+void* IGSharp_Font_GetFontBaked(void* font, float font_size, float density)
+{ return FONT(font)->GetFontBaked(font_size, density); }
+
+IGSharp_Vec2 IGSharp_Font_CalcTextSizeA(void* font, float size, float max_width, float wrap_width, const char* text_begin, const char* text_end, const char** out_remaining)
+{ return FromImVec2(FONT(font)->CalcTextSizeA(size, max_width, wrap_width, text_begin, text_end, out_remaining)); }
+
+const char* IGSharp_Font_CalcWordWrapPosition(void* font, float size, const char* text, const char* text_end, float wrap_width)
+{ return FONT(font)->CalcWordWrapPosition(size, text, text_end, wrap_width); }
+
+void IGSharp_Font_RenderChar(void* font, void* draw_list, float size, IGSharp_Vec2 pos, unsigned int col, unsigned short c, const IGSharp_Vec4* cpu_fine_clip)
+{
+    ImVec4 clip;
+    const ImVec4* clip_ptr = nullptr;
+    if (cpu_fine_clip) { clip = ToImVec4(*cpu_fine_clip); clip_ptr = &clip; }
+    FONT(font)->RenderChar((ImDrawList*)draw_list, size, ToImVec2(pos), (ImU32)col, (ImWchar)c, clip_ptr);
+}
+
+void IGSharp_Font_RenderText(void* font, void* draw_list, float size, IGSharp_Vec2 pos, unsigned int col, IGSharp_Vec4 clip_rect, const char* text_begin, const char* text_end, float wrap_width, int flags)
+{ FONT(font)->RenderText((ImDrawList*)draw_list, size, ToImVec2(pos), (ImU32)col, ToImVec4(clip_rect), text_begin, text_end, wrap_width, (ImDrawTextFlags)flags); }
+
+void IGSharp_Font_AddRemapChar(void* font, unsigned short from_codepoint, unsigned short to_codepoint)
+{ FONT(font)->AddRemapChar((ImWchar)from_codepoint, (ImWchar)to_codepoint); }
+
+bool IGSharp_Font_IsGlyphRangeUnused(void* font, unsigned int c_begin, unsigned int c_last)
+{ return FONT(font)->IsGlyphRangeUnused(c_begin, c_last); }
+
+int  IGSharp_Font_GetFlags(void* font)              { return (int)FONT(font)->Flags; }
+void IGSharp_Font_SetFlags(void* font, int flags)   { FONT(font)->Flags = (ImFontFlags)flags; }
+unsigned short IGSharp_Font_GetFallbackChar(void* font)              { return (unsigned short)FONT(font)->FallbackChar; }
+void IGSharp_Font_SetFallbackChar(void* font, unsigned short c)      { FONT(font)->FallbackChar = (ImWchar)c; }
+unsigned short IGSharp_Font_GetEllipsisChar(void* font)              { return (unsigned short)FONT(font)->EllipsisChar; }
+void IGSharp_Font_SetEllipsisChar(void* font, unsigned short c)      { FONT(font)->EllipsisChar = (ImWchar)c; }
+float IGSharp_Font_GetLegacySize(void* font)        { return FONT(font)->LegacySize; }
+void  IGSharp_Font_SetLegacySize(void* font, float size) { FONT(font)->LegacySize = size; }
+
+// --- struct-accessors-ImGuiViewport ---
+unsigned int IGSharp_Viewport_GetID(void* viewport)                  { return (unsigned int)((ImGuiViewport*)viewport)->ID; }
+int IGSharp_Viewport_GetFlags(void* viewport)                        { return (int)((ImGuiViewport*)viewport)->Flags; }
+IGSharp_Vec2 IGSharp_Viewport_GetFramebufferScale(void* viewport)    { return FromImVec2(((ImGuiViewport*)viewport)->FramebufferScale); }
+void* IGSharp_Viewport_GetPlatformHandle(void* viewport)             { return ((ImGuiViewport*)viewport)->PlatformHandle; }
+void IGSharp_Viewport_SetPlatformHandle(void* viewport, void* handle){ ((ImGuiViewport*)viewport)->PlatformHandle = handle; }
+void* IGSharp_Viewport_GetPlatformHandleRaw(void* viewport)          { return ((ImGuiViewport*)viewport)->PlatformHandleRaw; }
+void IGSharp_Viewport_SetPlatformHandleRaw(void* viewport, void* handle){ ((ImGuiViewport*)viewport)->PlatformHandleRaw = handle; }
+IGSharp_Vec2 IGSharp_Viewport_GetCenter(void* viewport)              { return FromImVec2(((ImGuiViewport*)viewport)->GetCenter()); }
+IGSharp_Vec2 IGSharp_Viewport_GetWorkCenter(void* viewport)          { return FromImVec2(((ImGuiViewport*)viewport)->GetWorkCenter()); }
+
+// --- ImGuiPlatformIO (accessors) ---
+static inline ImGuiPlatformIO* PIO(IGSharp_PlatformIO* p) { return reinterpret_cast<ImGuiPlatformIO*>(p); }
+
+IGSharp_PlatformIO* IGSharp_GetPlatformIO(void) { return reinterpret_cast<IGSharp_PlatformIO*>(&ImGui::GetPlatformIO()); }
+
+void IGSharp_PlatformIO_SetPlatformGetClipboardTextFn(IGSharp_PlatformIO* pio, IGSharp_Platform_GetClipboardTextFn fn)
+{ PIO(pio)->Platform_GetClipboardTextFn = reinterpret_cast<const char* (*)(ImGuiContext*)>(fn); }
+void IGSharp_PlatformIO_SetPlatformSetClipboardTextFn(IGSharp_PlatformIO* pio, IGSharp_Platform_SetClipboardTextFn fn)
+{ PIO(pio)->Platform_SetClipboardTextFn = reinterpret_cast<void (*)(ImGuiContext*, const char*)>(fn); }
+void IGSharp_PlatformIO_SetPlatformOpenInShellFn(IGSharp_PlatformIO* pio, IGSharp_Platform_OpenInShellFn fn)
+{ PIO(pio)->Platform_OpenInShellFn = reinterpret_cast<bool (*)(ImGuiContext*, const char*)>(fn); }
+void IGSharp_PlatformIO_SetPlatformSetImeDataFn(IGSharp_PlatformIO* pio, IGSharp_Platform_SetImeDataFn fn)
+{ PIO(pio)->Platform_SetImeDataFn = reinterpret_cast<void (*)(ImGuiContext*, ImGuiViewport*, ImGuiPlatformImeData*)>(fn); }
+
+void*          IGSharp_PlatformIO_GetPlatformClipboardUserData(IGSharp_PlatformIO* pio)            { return PIO(pio)->Platform_ClipboardUserData; }
+void           IGSharp_PlatformIO_SetPlatformClipboardUserData(IGSharp_PlatformIO* pio, void* ud)  { PIO(pio)->Platform_ClipboardUserData = ud; }
+void*          IGSharp_PlatformIO_GetPlatformOpenInShellUserData(IGSharp_PlatformIO* pio)           { return PIO(pio)->Platform_OpenInShellUserData; }
+void           IGSharp_PlatformIO_SetPlatformOpenInShellUserData(IGSharp_PlatformIO* pio, void* ud) { PIO(pio)->Platform_OpenInShellUserData = ud; }
+void*          IGSharp_PlatformIO_GetPlatformImeUserData(IGSharp_PlatformIO* pio)                   { return PIO(pio)->Platform_ImeUserData; }
+void           IGSharp_PlatformIO_SetPlatformImeUserData(IGSharp_PlatformIO* pio, void* ud)         { PIO(pio)->Platform_ImeUserData = ud; }
+unsigned short IGSharp_PlatformIO_GetPlatformLocaleDecimalPoint(IGSharp_PlatformIO* pio)            { return (unsigned short)PIO(pio)->Platform_LocaleDecimalPoint; }
+void           IGSharp_PlatformIO_SetPlatformLocaleDecimalPoint(IGSharp_PlatformIO* pio, unsigned short c) { PIO(pio)->Platform_LocaleDecimalPoint = (ImWchar)c; }
+int            IGSharp_PlatformIO_GetRendererTextureMaxWidth(IGSharp_PlatformIO* pio)               { return PIO(pio)->Renderer_TextureMaxWidth; }
+void           IGSharp_PlatformIO_SetRendererTextureMaxWidth(IGSharp_PlatformIO* pio, int v)        { PIO(pio)->Renderer_TextureMaxWidth = v; }
+int            IGSharp_PlatformIO_GetRendererTextureMaxHeight(IGSharp_PlatformIO* pio)              { return PIO(pio)->Renderer_TextureMaxHeight; }
+void           IGSharp_PlatformIO_SetRendererTextureMaxHeight(IGSharp_PlatformIO* pio, int v)       { PIO(pio)->Renderer_TextureMaxHeight = v; }
+void*          IGSharp_PlatformIO_GetRendererRenderState(IGSharp_PlatformIO* pio)                   { return PIO(pio)->Renderer_RenderState; }
+void           IGSharp_PlatformIO_SetRendererRenderState(IGSharp_PlatformIO* pio, void* rs)         { PIO(pio)->Renderer_RenderState = rs; }
+
+void IGSharp_PlatformIO_ClearPlatformHandlers(IGSharp_PlatformIO* pio) { PIO(pio)->ClearPlatformHandlers(); }
+void IGSharp_PlatformIO_ClearRendererHandlers(IGSharp_PlatformIO* pio) { PIO(pio)->ClearRendererHandlers(); }
+
+// --- fn-misc-overloads-gaps ---
+bool IGSharp_BeginChildID(unsigned int id, IGSharp_Vec2 size, int child_flags, int window_flags)
+{ return ImGui::BeginChild((ImGuiID)id, ToImVec2(size), child_flags, window_flags); }
+
+bool IGSharp_CheckboxFlags(const char* label, int* flags, int flags_value)
+{ return ImGui::CheckboxFlags(label, flags, flags_value); }
+
+bool IGSharp_CheckboxFlagsUInt(const char* label, unsigned int* flags, unsigned int flags_value)
+{ return ImGui::CheckboxFlags(label, flags, flags_value); }
+
+void IGSharp_SetItemTooltip(const char* text)   { ImGui::SetItemTooltip("%s", text); }
+
+// --- fn-drawdata-textures ---
+int   IGSharp_DrawData_GetTexturesCount(void* draw_data)
+{
+    ImVector<ImTextureData*>* t = DD(draw_data)->Textures;
+    return t ? t->Size : 0;
+}
+void* IGSharp_DrawData_GetTexturesData(void* draw_data)
+{
+    ImVector<ImTextureData*>* t = DD(draw_data)->Textures;
+    return t ? (void*)t->Data : nullptr;
+}
+
+// --- struct-accessors-FontAtlas-status ---
+bool IGSharp_FontAtlas_GetTexIsBuilt(void* atlas)            { return ((ImFontAtlas*)atlas)->TexIsBuilt; }
+bool IGSharp_FontAtlas_GetLocked(void* atlas)               { return ((ImFontAtlas*)atlas)->Locked; }
+bool IGSharp_FontAtlas_GetRendererHasTextures(void* atlas)  { return ((ImFontAtlas*)atlas)->RendererHasTextures; }
+const char* IGSharp_FontAtlas_GetFontLoaderName(void* atlas){ return ((ImFontAtlas*)atlas)->FontLoaderName; }
+
+// --- struct-accessors-FontBaked-rasterizerdensity ---
+float IGSharp_FontBaked_GetRasterizerDensity(void* baked) { return ((ImFontBaked*)baked)->RasterizerDensity; }
+
+// --- fn-widgets-missing ---
+bool IGSharp_DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed, float v_min, float v_max, const char* format, const char* format_max, int flags)
+{ return ImGui::DragFloatRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags); }
+
+bool IGSharp_DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, const char* format, const char* format_max, int flags)
+{ return ImGui::DragIntRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags); }
+
+void IGSharp_SetColorEditOptions(int flags)
+{ ImGui::SetColorEditOptions(flags); }
+
+bool IGSharp_TreeNodeStr(const char* str_id, const char* text)
+{ return ImGui::TreeNode(str_id, "%s", text); }
+
+bool IGSharp_TreeNodePtr(const void* ptr_id, const char* text)
+{ return ImGui::TreeNode(ptr_id, "%s", text); }
+
+bool IGSharp_TreeNodeExStr(const char* str_id, int flags, const char* text)
+{ return ImGui::TreeNodeEx(str_id, flags, "%s", text); }
+
+bool IGSharp_TreeNodeExPtr(const void* ptr_id, int flags, const char* text)
+{ return ImGui::TreeNodeEx(ptr_id, flags, "%s", text); }
