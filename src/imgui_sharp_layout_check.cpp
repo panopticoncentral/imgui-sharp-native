@@ -17,6 +17,19 @@
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 #endif
 
+// --- IGSharp_Vec2 / IGSharp_Vec4 -------------------------------------------
+// POD mirrors of ImVec2/ImVec4. Function-call paths convert by value, but these
+// types are also embedded in the layout-mirrored IGSharp_Style/IGSharp_IO/
+// IGSharp_DrawVert/IGSharp_PlatformImeData structs, so pin their layout directly.
+static_assert(sizeof(IGSharp_Vec2) == sizeof(ImVec2), "IGSharp_Vec2 size mismatch with ImVec2");
+static_assert(offsetof(IGSharp_Vec2, x) == offsetof(ImVec2, x), "IGSharp_Vec2.x");
+static_assert(offsetof(IGSharp_Vec2, y) == offsetof(ImVec2, y), "IGSharp_Vec2.y");
+static_assert(sizeof(IGSharp_Vec4) == sizeof(ImVec4), "IGSharp_Vec4 size mismatch with ImVec4");
+static_assert(offsetof(IGSharp_Vec4, x) == offsetof(ImVec4, x), "IGSharp_Vec4.x");
+static_assert(offsetof(IGSharp_Vec4, y) == offsetof(ImVec4, y), "IGSharp_Vec4.y");
+static_assert(offsetof(IGSharp_Vec4, z) == offsetof(ImVec4, z), "IGSharp_Vec4.z");
+static_assert(offsetof(IGSharp_Vec4, w) == offsetof(ImVec4, w), "IGSharp_Vec4.w");
+
 // --- Mirrored enums --------------------------------------------------------
 // IGSharp_Key / IGSharp_Col mirror ImGuiKey / ImGuiCol_ 1:1. Per-value
 // static_asserts catch reordering, renaming, or value drift on a Dear ImGui
@@ -197,6 +210,15 @@ static_assert(offsetof(IGSharp_KeyData, AnalogValue)      == offsetof(ImGuiKeyDa
 
 static_assert(sizeof(ImVector<ImWchar>) == 2 * sizeof(int) + sizeof(ImWchar*),
               "ImVector layout assumption broken — expected { int Size; int Capacity; T* Data; }");
+// Pin the member order itself (not just the total size): Size@0, Capacity@sizeof(int), Data@2*sizeof(int).
+static_assert(offsetof(ImVector<ImWchar>, Size) == 0, "ImVector::Size not at offset 0");
+static_assert(offsetof(ImVector<ImWchar>, Capacity) == sizeof(int), "ImVector::Capacity not at offset sizeof(int)");
+static_assert(offsetof(ImVector<ImWchar>, Data) == 2 * sizeof(int), "ImVector::Data not at offset 2*sizeof(int)");
+
+// ImWchar width: the wrapper hardcodes 'unsigned short' for every ImWchar parameter/field
+// (glyph ranges, EllipsisChar, InputQueueCharacters_Data, ...). A IMGUI_USE_WCHAR32 build would
+// silently break those; pin it here.
+static_assert(sizeof(ImWchar) == sizeof(unsigned short), "ImWchar is not 16-bit; the C wrapper assumes unsigned short (do not define IMGUI_USE_WCHAR32)");
 
 // --- IGSharp_IO ------------------------------------------------------------
 
@@ -993,6 +1015,11 @@ static_assert(offsetof(IGSharp_DrawVert, uv) == offsetof(ImDrawVert, uv), "IGSha
 static_assert(offsetof(IGSharp_DrawVert, col) == offsetof(ImDrawVert, col), "IGSharp_DrawVert.col");
 #endif
 
+// ImDrawIdx: the wrapper bakes in 16-bit indices (PrimWriteIdx/GetIdxBufferData document unsigned short).
+static_assert(sizeof(ImDrawIdx) == sizeof(unsigned short), "ImDrawIdx is not 16-bit; the C wrapper assumes unsigned short index buffers");
+// (ImDrawCallback_ResetRenderState == (ImDrawCallback)-8 cannot be static_assert'd: a function-pointer
+//  cast is not a constant expression. IGSHARP_DRAWCALLBACK_RESETRENDERSTATE mirrors the -8 value by hand.)
+
 // ImTextureFormat
 #define TEXFMT_VAL(F) static_assert((int)IGSharp_TextureFormat_##F == (int)ImTextureFormat_##F, "IGSharp_TextureFormat_" #F " value drift")
 TEXFMT_VAL(RGBA32);
@@ -1014,6 +1041,10 @@ static_assert(offsetof(IGSharp_TextureRect, x) == offsetof(ImTextureRect, x), "I
 static_assert(offsetof(IGSharp_TextureRect, y) == offsetof(ImTextureRect, y), "IGSharp_TextureRect.y");
 static_assert(offsetof(IGSharp_TextureRect, w) == offsetof(ImTextureRect, w), "IGSharp_TextureRect.w");
 static_assert(offsetof(IGSharp_TextureRect, h) == offsetof(ImTextureRect, h), "IGSharp_TextureRect.h");
+
+// ImTextureID (passed across the C API as unsigned long long; sentinel mirrored as IGSHARP_TEXTUREID_INVALID)
+static_assert(sizeof(ImTextureID) == sizeof(unsigned long long), "ImTextureID is not 64-bit; the C wrapper passes it as unsigned long long");
+static_assert((unsigned long long)ImTextureID_Invalid == IGSHARP_TEXTUREID_INVALID, "IGSHARP_TEXTUREID_INVALID drift from ImTextureID_Invalid");
 
 // ImFontAtlasFlags_
 #define FONTATLASFLAGS_VAL(F) static_assert((int)IGSharp_FontAtlasFlags_##F == (int)ImFontAtlasFlags_##F, "IGSharp_FontAtlasFlags_" #F " value drift")

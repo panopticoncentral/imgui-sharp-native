@@ -72,8 +72,8 @@ Each unblocks a corresponding feature that is currently stubbed or deferred.
   `SetScrollHereX/Y`, `SetScrollFromPosX/Y`.
 - [x] **Focus / activation helpers** — `SetKeyboardFocusHere`, `SetNextItemAllowOverlap`.
 - [x] **`SetNextWindowSizeConstraints` / `SetNextWindowContentSize` / `SetNextWindowScroll`**
-  — exported (size-constraints variant takes min/max only; programmatic callback form
-  not exposed).
+  — exported. `SetNextWindowSizeConstraints` now takes the full `(min, max,
+  IGSharp_SizeCallback custom_callback, void* custom_callback_data)` form.
 
 Resolved without an export change:
 

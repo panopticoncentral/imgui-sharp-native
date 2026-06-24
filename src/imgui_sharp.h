@@ -1,5 +1,30 @@
 // dear imgui sharp
 
+/*
+
+Index of this file:
+
+// [SECTION] Header mess
+// [SECTION] Forward declarations and basic types
+// [SECTION] Texture identifiers (ImTextureID, ImTextureRef)
+// [SECTION] Dear ImGui end-user API functions
+// [SECTION] Flags & Enumerations
+// [SECTION] Tables API flags and structures (ImGuiTableFlags, ImGuiTableColumnFlags, ImGuiTableRowFlags, ImGuiTableBgTarget, ImGuiTableSortSpecs, ImGuiTableColumnSortSpecs)
+// [SECTION] Helpers: Debug log, memory allocations macros, ImVector<>
+// [SECTION] ImGuiStyle
+// [SECTION] ImGuiIO
+// [SECTION] Misc data structures (ImGuiInputTextCallbackData, ImGuiSizeCallbackData, ImGuiPayload)
+// [SECTION] Helpers (ImGuiOnceUponAFrame, ImGuiTextFilter, ImGuiTextBuffer, ImGuiStorage, ImGuiListClipper, Math Operators, ImColor)
+// [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiSelectionRequestType, ImGuiSelectionRequest, ImGuiMultiSelectIO, ImGuiSelectionBasicStorage)
+// [SECTION] Drawing API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter, ImDrawListFlags, ImDrawList, ImDrawData)
+// [SECTION] Texture API (ImTextureFormat, ImTextureStatus, ImTextureRect, ImTextureData)
+// [SECTION] Font API (ImFontConfig, ImFontGlyph, ImFontAtlasFlags, ImFontAtlas, ImFontGlyphRangesBuilder, ImFont)
+// [SECTION] Viewports
+// [SECTION] Platform Dependent Interfaces
+// [SECTION] Obsolete functions and types
+
+*/
+
 #pragma once
 
 //-----------------------------------------------------------------------------
@@ -7,6 +32,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stddef.h>
+#include <stdint.h>
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
@@ -40,6 +66,9 @@ typedef struct IGSharp_PlatformIO IGSharp_PlatformIO;
 
 // Callback typedefs
 typedef int         (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
+typedef void        (*IGSharp_SizeCallback)(void* data);      // data = ImGuiSizeCallbackData* (use IGSharp_SizeCallbackData_* accessors)
+typedef void* (*IGSharp_MemAllocFunc)(size_t sz, void* user_data);
+typedef void  (*IGSharp_MemFreeFunc)(void* ptr, void* user_data);
 
 typedef struct {
     float x, y;
@@ -49,17 +78,26 @@ typedef struct {
     float x, y, z, w;
 } IGSharp_Vec4;
 
-typedef struct {
-    bool  Down;
-    float DownDuration;
-    float DownDurationPrev;
-    float AnalogValue;
-} IGSharp_KeyData;
-
 //-----------------------------------------------------------------------------
 // [SECTION] Texture identifiers (ImTextureID, ImTextureRef)
 //-----------------------------------------------------------------------------
-// (no wrappers yet)
+// ImTextureID is the backend-specific low-level texture identifier (ImU64 by
+// default). It is passed across this API as 'unsigned long long'; the width is
+// pinned by a static_assert in imgui_sharp_layout_check.cpp.
+//
+// ImTextureRef carries EITHER an ImTextureID (user-provided texture) OR an
+// ImTextureData* (a backend/atlas texture whose ImTextureID only becomes valid
+// after the renderer uploads it). Converting a ref to an id before upload is
+// lossy. This API keeps the two paths separate instead of mirroring the union:
+//   - user textures: pass the ImTextureID via the 'unsigned long long tex_id'
+//     parameters on IGSharp_Image*/IGSharp_DrawList_AddImage*/PushTexture.
+//   - atlas/backend textures: obtain the ImTextureData* (e.g.
+//     IGSharp_FontAtlas_GetTexData) and pass it to the *TextureData variants,
+//     which preserve the indirection into the recorded draw command.
+
+// Sentinel for "no texture" (mirror of ImTextureID_Invalid). Value pinned by a
+// static_assert in imgui_sharp_layout_check.cpp.
+#define IGSHARP_TEXTUREID_INVALID 0ULL
 
 //-----------------------------------------------------------------------------
 // [SECTION] Dear ImGui end-user API functions
@@ -94,9 +132,10 @@ IGSHARP_API void        IGSharp_ShowUserGuide(void);
 IGSHARP_API const char* IGSharp_GetVersion(void);
 
 // Styles
-IGSHARP_API void IGSharp_StyleColorsDark(void);
-IGSHARP_API void IGSharp_StyleColorsLight(void);
-IGSHARP_API void IGSharp_StyleColorsClassic(void);
+// dst (IGSharp_Style*, may be NULL == current style) selects which style the palette is written into.
+IGSHARP_API void IGSharp_StyleColorsDark(IGSharp_Style* dst);
+IGSHARP_API void IGSharp_StyleColorsLight(IGSharp_Style* dst);
+IGSHARP_API void IGSharp_StyleColorsClassic(IGSharp_Style* dst);
 
 // Windows
 IGSHARP_API bool IGSharp_Begin(const char* name, bool* p_open, int flags);
@@ -104,6 +143,7 @@ IGSHARP_API void IGSharp_End(void);
 
 // Child Windows
 IGSHARP_API bool IGSharp_BeginChild(const char* str_id, IGSharp_Vec2 size, int child_flags, int window_flags);
+IGSHARP_API bool IGSharp_BeginChildID(unsigned int id, IGSharp_Vec2 size, int child_flags, int window_flags);
 IGSHARP_API void IGSharp_EndChild(void);
 
 // Windows Utilities
@@ -111,6 +151,7 @@ IGSHARP_API bool         IGSharp_IsWindowAppearing(void);
 IGSHARP_API bool         IGSharp_IsWindowCollapsed(void);
 IGSHARP_API bool         IGSharp_IsWindowFocused(int flags);
 IGSHARP_API bool         IGSharp_IsWindowHovered(int flags);
+IGSHARP_API void* IGSharp_GetWindowDrawList(void);
 IGSHARP_API IGSharp_Vec2 IGSharp_GetWindowPos(void);
 IGSHARP_API IGSharp_Vec2 IGSharp_GetWindowSize(void);
 IGSHARP_API float        IGSharp_GetWindowWidth(void);
@@ -119,12 +160,20 @@ IGSHARP_API float        IGSharp_GetWindowHeight(void);
 // Window manipulation
 IGSHARP_API void IGSharp_SetNextWindowPos(IGSharp_Vec2 pos, int cond, IGSharp_Vec2 pivot);
 IGSHARP_API void IGSharp_SetNextWindowSize(IGSharp_Vec2 size, int cond);
-IGSHARP_API void IGSharp_SetNextWindowSizeConstraints(IGSharp_Vec2 size_min, IGSharp_Vec2 size_max);
+IGSHARP_API void IGSharp_SetNextWindowSizeConstraints(IGSharp_Vec2 size_min, IGSharp_Vec2 size_max, IGSharp_SizeCallback custom_callback, void* custom_callback_data);
 IGSHARP_API void IGSharp_SetNextWindowContentSize(IGSharp_Vec2 size);
 IGSHARP_API void IGSharp_SetNextWindowCollapsed(bool collapsed, int cond);
 IGSHARP_API void IGSharp_SetNextWindowFocus(void);
 IGSHARP_API void IGSharp_SetNextWindowScroll(IGSharp_Vec2 scroll);
 IGSHARP_API void IGSharp_SetNextWindowBgAlpha(float alpha);
+IGSHARP_API void IGSharp_SetWindowPos(IGSharp_Vec2 pos, int cond);
+IGSHARP_API void IGSharp_SetWindowSize(IGSharp_Vec2 size, int cond);
+IGSHARP_API void IGSharp_SetWindowCollapsed(bool collapsed, int cond);
+IGSHARP_API void IGSharp_SetWindowFocus(void);
+IGSHARP_API void IGSharp_SetWindowPosNamed(const char* name, IGSharp_Vec2 pos, int cond);
+IGSHARP_API void IGSharp_SetWindowSizeNamed(const char* name, IGSharp_Vec2 size, int cond);
+IGSHARP_API void IGSharp_SetWindowCollapsedNamed(const char* name, bool collapsed, int cond);
+IGSHARP_API void IGSharp_SetWindowFocusNamed(const char* name);
 
 // Windows Scrolling
 IGSHARP_API float IGSharp_GetScrollX(void);
@@ -143,6 +192,7 @@ IGSHARP_API void  IGSharp_PushFont(void* font, float font_size_base_unscaled);
 IGSHARP_API void  IGSharp_PopFont(void);
 IGSHARP_API void* IGSharp_GetFont(void);
 IGSHARP_API float IGSharp_GetFontSize(void);
+IGSHARP_API void* IGSharp_GetFontBaked(void);
 
 // Parameters stacks (shared)
 IGSHARP_API void IGSharp_PushStyleColorU32(int idx, unsigned int col);
@@ -150,6 +200,8 @@ IGSHARP_API void IGSharp_PushStyleColorVec4(int idx, IGSharp_Vec4 col);
 IGSHARP_API void IGSharp_PopStyleColor(int count);
 IGSHARP_API void IGSharp_PushStyleVarFloat(int idx, float val);
 IGSHARP_API void IGSharp_PushStyleVarVec2(int idx, IGSharp_Vec2 val);
+IGSHARP_API void IGSharp_PushStyleVarX(int idx, float val_x);
+IGSHARP_API void IGSharp_PushStyleVarY(int idx, float val_y);
 IGSHARP_API void IGSharp_PopStyleVar(int count);
 IGSHARP_API void IGSharp_PushItemFlag(int option, bool enabled);
 IGSHARP_API void IGSharp_PopItemFlag(void);
@@ -163,15 +215,23 @@ IGSHARP_API void  IGSharp_PushTextWrapPos(float wrap_local_pos_x);
 IGSHARP_API void  IGSharp_PopTextWrapPos(void);
 
 // Style read access
+IGSHARP_API IGSharp_Vec2 IGSharp_GetFontTexUvWhitePixel(void);
 IGSHARP_API unsigned int IGSharp_GetColorU32(int idx, float alpha_mul);
 IGSHARP_API unsigned int IGSharp_GetColorU32Vec4(IGSharp_Vec4 col);
 IGSHARP_API unsigned int IGSharp_GetColorU32Packed(unsigned int col, float alpha_mul);
+IGSHARP_API IGSharp_Vec4 IGSharp_GetStyleColorVec4(int idx);
 
 // Layout cursor positioning
 IGSHARP_API IGSharp_Vec2 IGSharp_GetCursorScreenPos(void);
 IGSHARP_API void         IGSharp_SetCursorScreenPos(IGSharp_Vec2 screen_pos);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetContentRegionAvail(void);
 IGSHARP_API IGSharp_Vec2 IGSharp_GetCursorPos(void);
+IGSHARP_API float        IGSharp_GetCursorPosX(void);
+IGSHARP_API float        IGSharp_GetCursorPosY(void);
 IGSHARP_API void         IGSharp_SetCursorPos(IGSharp_Vec2 local_pos);
+IGSHARP_API void         IGSharp_SetCursorPosX(float local_x);
+IGSHARP_API void         IGSharp_SetCursorPosY(float local_y);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetCursorStartPos(void);
 
 // Other layout functions
 IGSHARP_API void         IGSharp_Separator(void);
@@ -188,13 +248,17 @@ IGSHARP_API float        IGSharp_GetTextLineHeight(void);
 IGSHARP_API float        IGSharp_GetTextLineHeightWithSpacing(void);
 IGSHARP_API float        IGSharp_GetFrameHeight(void);
 IGSHARP_API float        IGSharp_GetFrameHeightWithSpacing(void);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetContentRegionAvail(void);
 
 // ID stack/scopes
 IGSHARP_API void         IGSharp_PushIDStr(const char* str_id);
+IGSHARP_API void         IGSharp_PushIDStrRange(const char* str_id_begin, const char* str_id_end);
+IGSHARP_API void         IGSharp_PushIDPtr(const void* ptr_id);
 IGSHARP_API void         IGSharp_PushIDInt(int int_id);
 IGSHARP_API void         IGSharp_PopID(void);
 IGSHARP_API unsigned int IGSharp_GetIDStr(const char* str_id);
+IGSHARP_API unsigned int IGSharp_GetIDStrRange(const char* str_id_begin, const char* str_id_end);
+IGSHARP_API unsigned int IGSharp_GetIDPtr(const void* ptr_id);
+IGSHARP_API unsigned int IGSharp_GetIDInt(int int_id);
 
 // Widgets: Text
 IGSHARP_API void IGSharp_TextUnformatted(const char* text, const char* text_end);
@@ -212,34 +276,45 @@ IGSHARP_API bool IGSharp_SmallButton(const char* label);
 IGSHARP_API bool IGSharp_InvisibleButton(const char* str_id, IGSharp_Vec2 size, int flags);
 IGSHARP_API bool IGSharp_ArrowButton(const char* str_id, int dir);
 IGSHARP_API bool IGSharp_Checkbox(const char* label, bool* v);
+IGSHARP_API bool IGSharp_CheckboxFlags(const char* label, int* flags, int flags_value);
+IGSHARP_API bool IGSharp_CheckboxFlagsUInt(const char* label, unsigned int* flags, unsigned int flags_value);
 IGSHARP_API bool IGSharp_RadioButton(const char* label, bool active);
 IGSHARP_API bool IGSharp_RadioButtonInt(const char* label, int* v, int v_button);
 IGSHARP_API void IGSharp_ProgressBar(float fraction, IGSharp_Vec2 size_arg, const char* overlay);
 IGSHARP_API void IGSharp_Bullet(void);
 IGSHARP_API bool IGSharp_TextLink(const char* label);
-IGSHARP_API void IGSharp_TextLinkOpenURL(const char* label, const char* url);
+IGSHARP_API bool IGSharp_TextLinkOpenURL(const char* label, const char* url);
 
 // Widgets: Images
+IGSHARP_API void IGSharp_Image(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1);
 IGSHARP_API void IGSharp_ImageWithBg(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
 IGSHARP_API bool IGSharp_ImageButton(const char* str_id, unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
+// ImTextureData* variants: bind an atlas/backend texture (e.g. from IGSharp_FontAtlas_GetTexData)
+// while preserving the deferred ImTextureID resolution (tex_data may be NULL == no texture).
+IGSHARP_API void IGSharp_ImageTextureData(void* tex_data, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1);
+IGSHARP_API void IGSharp_ImageWithBgTextureData(void* tex_data, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
+IGSHARP_API bool IGSharp_ImageButtonTextureData(const char* str_id, void* tex_data, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1, IGSharp_Vec4 bg_col, IGSharp_Vec4 tint_col);
 
 // Widgets: Combo Box (Dropdown)
 IGSHARP_API bool IGSharp_BeginCombo(const char* label, const char* preview_value, int flags);
 IGSHARP_API void IGSharp_EndCombo(void);
+IGSHARP_API bool IGSharp_Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items);
+IGSHARP_API bool IGSharp_ComboStr(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items);
+IGSHARP_API bool IGSharp_ComboCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height_in_items);
 
 // Widgets: Drag Sliders
 IGSHARP_API bool IGSharp_DragFloat(const char* label, float* v, float v_speed, float v_min, float v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragFloat2(const char* label, float v[2], float v_speed, float v_min, float v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragFloat3(const char* label, float v[3], float v_speed, float v_min, float v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragFloat4(const char* label, float v[4], float v_speed, float v_min, float v_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed, float v_min, float v_max, const char* format, const char* format_max, int flags);
 IGSHARP_API bool IGSharp_DragInt(const char* label, int* v, float v_speed, int v_min, int v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragInt2(const char* label, int v[2], float v_speed, int v_min, int v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragInt3(const char* label, int v[3], float v_speed, int v_min, int v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragInt4(const char* label, int v[4], float v_speed, int v_min, int v_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, const char* format, const char* format_max, int flags);
 IGSHARP_API bool IGSharp_DragScalar(const char* label, int data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_DragScalarN(const char* label, int data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, int flags);
-IGSHARP_API bool IGSharp_DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed, float v_min, float v_max, const char* format, const char* format_max, int flags);
-IGSHARP_API bool IGSharp_DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, const char* format, const char* format_max, int flags);
 
 // Widgets: Regular Sliders
 IGSHARP_API bool IGSharp_SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format, int flags);
@@ -253,6 +328,8 @@ IGSHARP_API bool IGSharp_SliderInt3(const char* label, int v[3], int v_min, int 
 IGSHARP_API bool IGSharp_SliderInt4(const char* label, int v[4], int v_min, int v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_SliderScalar(const char* label, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_SliderScalarN(const char* label, int data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_VSliderFloat(const char* label, IGSharp_Vec2 size, float* v, float v_min, float v_max, const char* format, int flags);
+IGSHARP_API bool IGSharp_VSliderInt(const char* label, IGSharp_Vec2 size, int* v, int v_min, int v_max, const char* format, int flags);
 IGSHARP_API bool IGSharp_VSliderScalar(const char* label, IGSharp_Vec2 size, int data_type, void* p_data, const void* p_min, const void* p_max, const char* format, int flags);
 
 // Widgets: Input with Keyboard
@@ -284,17 +361,20 @@ IGSHARP_API void IGSharp_SetColorEditOptions(int flags); // flags = ImGuiColorEd
 
 // Widgets: Trees
 IGSHARP_API bool  IGSharp_TreeNode(const char* label);
-IGSHARP_API bool  IGSharp_TreeNodeEx(const char* label, int flags);
 IGSHARP_API bool  IGSharp_TreeNodeStr(const char* str_id, const char* text);              // decorrelate id from displayed text
 IGSHARP_API bool  IGSharp_TreeNodePtr(const void* ptr_id, const char* text);
+IGSHARP_API bool  IGSharp_TreeNodeEx(const char* label, int flags);
 IGSHARP_API bool  IGSharp_TreeNodeExStr(const char* str_id, int flags, const char* text);
 IGSHARP_API bool  IGSharp_TreeNodeExPtr(const void* ptr_id, int flags, const char* text);
+IGSHARP_API void IGSharp_TreePushStr(const char* str_id);
+IGSHARP_API void IGSharp_TreePushPtr(const void* ptr_id);
 IGSHARP_API void  IGSharp_TreePop(void);
 IGSHARP_API float IGSharp_GetTreeNodeToLabelSpacing(void);
-IGSHARP_API bool  IGSharp_TreeNodeGetOpen(unsigned int storage_id);
 IGSHARP_API bool  IGSharp_CollapsingHeader(const char* label, int flags);
 IGSHARP_API bool  IGSharp_CollapsingHeaderClosable(const char* label, bool* p_visible, int flags);
 IGSHARP_API void  IGSharp_SetNextItemOpen(bool is_open, int cond);
+IGSHARP_API void IGSharp_SetNextItemStorageID(unsigned int storage_id);
+IGSHARP_API bool  IGSharp_TreeNodeGetOpen(unsigned int storage_id);
 
 // Widgets: Selectables
 IGSHARP_API bool IGSharp_Selectable(const char* label, bool selected, int flags, IGSharp_Vec2 size);
@@ -309,12 +389,20 @@ IGSHARP_API bool  IGSharp_IsItemToggledSelection(void);
 // Widgets: List Boxes
 IGSHARP_API bool IGSharp_BeginListBox(const char* label, IGSharp_Vec2 size);
 IGSHARP_API void IGSharp_EndListBox(void);
+IGSHARP_API bool IGSharp_ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items);
+IGSHARP_API bool IGSharp_ListBoxCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int height_in_items);
 
 // Widgets: Data Plotting
 IGSHARP_API void IGSharp_PlotLines(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
 IGSHARP_API void IGSharp_PlotLinesCallback(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
 IGSHARP_API void IGSharp_PlotHistogram(const char* label, const float* values, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size, int stride);
 IGSHARP_API void IGSharp_PlotHistogramCallback(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, IGSharp_Vec2 graph_size);
+
+// Widgets: Value() Helpers. Output single value in "name: value" format
+IGSHARP_API void IGSharp_ValueBool(const char* prefix, bool b);
+IGSHARP_API void IGSharp_ValueInt(const char* prefix, int v);
+IGSHARP_API void IGSharp_ValueUInt(const char* prefix, unsigned int v);
+IGSHARP_API void IGSharp_ValueFloat(const char* prefix, float v, const char* float_format);
 
 // Widgets: Menus
 IGSHARP_API bool IGSharp_BeginMenuBar(void);
@@ -333,6 +421,7 @@ IGSHARP_API void IGSharp_SetTooltip(const char* text);
 
 // Tooltips: helpers for showing a tooltip when hovering an item
 IGSHARP_API bool IGSharp_BeginItemTooltip(void);
+IGSHARP_API void IGSharp_SetItemTooltip(const char* text);
 
 // Popups, Modals
 IGSHARP_API bool IGSharp_BeginPopup(const char* str_id, int flags);
@@ -341,11 +430,14 @@ IGSHARP_API void IGSharp_EndPopup(void);
 
 // Popups: open/close functions
 IGSHARP_API void IGSharp_OpenPopup(const char* str_id, int popup_flags);
+IGSHARP_API void IGSharp_OpenPopupID(unsigned int id, int popup_flags);
+IGSHARP_API void IGSharp_OpenPopupOnItemClick(const char* str_id, int popup_flags);
 IGSHARP_API void IGSharp_CloseCurrentPopup(void);
 
 // Popups: Open+Begin popup combined functions helpers to create context menus.
 IGSHARP_API bool IGSharp_BeginPopupContextItem(const char* str_id, int popup_flags);
 IGSHARP_API bool IGSharp_BeginPopupContextWindow(const char* str_id, int popup_flags);
+IGSHARP_API bool IGSharp_BeginPopupContextVoid(const char* str_id, int popup_flags);
 
 // Popups: query functions
 IGSHARP_API bool IGSharp_IsPopupOpen(const char* str_id, int flags);
@@ -360,8 +452,9 @@ IGSHARP_API bool IGSharp_TableSetColumnIndex(int column_n);
 // Tables: Headers & Columns declaration
 IGSHARP_API void IGSharp_TableSetupColumn(const char* label, int flags, float init_width_or_weight, unsigned int user_id);
 IGSHARP_API void IGSharp_TableSetupScrollFreeze(int cols, int rows);
-IGSHARP_API void IGSharp_TableHeadersRow(void);
 IGSHARP_API void IGSharp_TableHeader(const char* label);
+IGSHARP_API void IGSharp_TableHeadersRow(void);
+IGSHARP_API void  IGSharp_TableAngledHeadersRow(void);
 
 // Tables: Sorting & Miscellaneous functions
 IGSHARP_API void*       IGSharp_TableGetSortSpecs(void);
@@ -374,6 +467,16 @@ IGSHARP_API void        IGSharp_TableSetColumnEnabled(int column_n, bool v);
 IGSHARP_API int         IGSharp_TableGetHoveredColumn(void);
 IGSHARP_API void        IGSharp_TableSetBgColor(int target, unsigned int color, int column_n);
 
+// Legacy Columns API (prefer using Tables!)
+IGSHARP_API void  IGSharp_Columns(int count, const char* id, bool borders);
+IGSHARP_API void  IGSharp_NextColumn(void);
+IGSHARP_API int   IGSharp_GetColumnIndex(void);
+IGSHARP_API float IGSharp_GetColumnWidth(int column_index);
+IGSHARP_API void  IGSharp_SetColumnWidth(int column_index, float width);
+IGSHARP_API float IGSharp_GetColumnOffset(int column_index);
+IGSHARP_API void  IGSharp_SetColumnOffset(int column_index, float offset_x);
+IGSHARP_API int   IGSharp_GetColumnsCount(void);
+
 // Tab Bars, Tabs
 IGSHARP_API bool IGSharp_BeginTabBar(const char* str_id, int flags);
 IGSHARP_API void IGSharp_EndTabBar(void);
@@ -381,6 +484,15 @@ IGSHARP_API bool IGSharp_BeginTabItem(const char* label, bool* p_open, int flags
 IGSHARP_API void IGSharp_EndTabItem(void);
 IGSHARP_API bool IGSharp_TabItemButton(const char* label, int flags);
 IGSHARP_API void IGSharp_SetTabItemClosed(const char* tab_or_docked_window_label);
+
+// Logging/Capture
+// - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are automatically opened during logging.
+IGSHARP_API void IGSharp_LogToTTY(int auto_open_depth);
+IGSHARP_API void IGSharp_LogToFile(int auto_open_depth, const char* filename);
+IGSHARP_API void IGSharp_LogToClipboard(int auto_open_depth);
+IGSHARP_API void IGSharp_LogFinish(void);
+IGSHARP_API void IGSharp_LogButtons(void);
+IGSHARP_API void IGSharp_LogText(const char* text);
 
 // Drag and Drop
 IGSHARP_API bool  IGSharp_BeginDragDropSource(int flags);
@@ -395,9 +507,16 @@ IGSHARP_API void* IGSharp_GetDragDropPayload(void);
 IGSHARP_API void IGSharp_BeginDisabled(bool disabled);
 IGSHARP_API void IGSharp_EndDisabled(void);
 
+// Clipping
+IGSHARP_API void IGSharp_PushClipRect(IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current_clip_rect);
+IGSHARP_API void IGSharp_PopClipRect(void);
+
 // Focus, Activation
-IGSHARP_API void IGSharp_SetKeyboardFocusHere(int offset);
 IGSHARP_API void IGSharp_SetItemDefaultFocus(void);
+IGSHARP_API void IGSharp_SetKeyboardFocusHere(int offset);
+
+// Keyboard/Gamepad Navigation
+IGSHARP_API void IGSharp_SetNavCursorVisible(bool visible);
 
 // Overlapping mode
 IGSHARP_API void IGSharp_SetNextItemAllowOverlap(void);
@@ -413,21 +532,31 @@ IGSHARP_API bool         IGSharp_IsItemActivated(void);
 IGSHARP_API bool         IGSharp_IsItemDeactivated(void);
 IGSHARP_API bool         IGSharp_IsItemDeactivatedAfterEdit(void);
 IGSHARP_API bool         IGSharp_IsItemToggledOpen(void);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectMin(void);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectMax(void);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectSize(void);
-IGSHARP_API unsigned int IGSharp_GetItemID(void);
 IGSHARP_API bool         IGSharp_IsAnyItemHovered(void);
 IGSHARP_API bool         IGSharp_IsAnyItemActive(void);
 IGSHARP_API bool         IGSharp_IsAnyItemFocused(void);
+IGSHARP_API unsigned int IGSharp_GetItemID(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectMin(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectMax(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetItemRectSize(void);
+IGSHARP_API int  IGSharp_GetItemFlags(void); // ImGuiItemFlags
 
 // Viewports
 IGSHARP_API void* IGSharp_GetMainViewport(void);
 
 // Background/Foreground Draw Lists
-IGSHARP_API void* IGSharp_GetWindowDrawList(void);
 IGSHARP_API void* IGSharp_GetBackgroundDrawList(void);
 IGSHARP_API void* IGSharp_GetForegroundDrawList(void);
+
+// Miscellaneous Utilities
+IGSHARP_API bool         IGSharp_IsRectVisible(IGSharp_Vec2 size);
+IGSHARP_API bool         IGSharp_IsRectVisibleRange(IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max);
+IGSHARP_API double       IGSharp_GetTime(void);
+IGSHARP_API int          IGSharp_GetFrameCount(void);
+IGSHARP_API void*        IGSharp_GetDrawListSharedData(void);
+IGSHARP_API const char*  IGSharp_GetStyleColorName(int idx);
+IGSHARP_API void         IGSharp_SetStateStorage(void* storage);
+IGSHARP_API void*        IGSharp_GetStateStorage(void);
 
 // Text Utilities
 IGSHARP_API IGSharp_Vec2 IGSharp_CalcTextSize(const char* text, const char* text_end, bool hide_text_after_double_hash, float wrap_width);
@@ -443,133 +572,6 @@ IGSHARP_API bool IGSharp_IsKeyDown(int key);
 IGSHARP_API bool IGSharp_IsKeyPressed(int key, bool repeat);
 IGSHARP_API bool IGSharp_IsKeyReleased(int key);
 IGSHARP_API bool IGSharp_IsKeyChordPressed(int key_chord);
-
-// Inputs Utilities: Mouse
-IGSHARP_API bool         IGSharp_IsMouseDown(int button);
-IGSHARP_API bool         IGSharp_IsMouseClicked(int button, bool repeat);
-IGSHARP_API bool         IGSharp_IsMouseReleased(int button);
-IGSHARP_API bool         IGSharp_IsMouseDoubleClicked(int button);
-IGSHARP_API bool         IGSharp_IsMouseHoveringRect(IGSharp_Vec2 r_min, IGSharp_Vec2 r_max, bool clip);
-IGSHARP_API bool         IGSharp_IsMousePosValid(const IGSharp_Vec2* mouse_pos);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetMousePos(void);
-IGSHARP_API bool         IGSharp_IsMouseDragging(int button, float lock_threshold);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetMouseDragDelta(int button, float lock_threshold);
-IGSHARP_API int          IGSharp_GetMouseCursor(void);
-IGSHARP_API void         IGSharp_SetMouseCursor(int cursor_type);
-
-// fn-platform-io-and-window-set
-IGSHARP_API void IGSharp_SetWindowPos(IGSharp_Vec2 pos, int cond);
-IGSHARP_API void IGSharp_SetWindowSize(IGSharp_Vec2 size, int cond);
-IGSHARP_API void IGSharp_SetWindowCollapsed(bool collapsed, int cond);
-IGSHARP_API void IGSharp_SetWindowFocus(void);
-IGSHARP_API void IGSharp_SetWindowPosNamed(const char* name, IGSharp_Vec2 pos, int cond);
-IGSHARP_API void IGSharp_SetWindowSizeNamed(const char* name, IGSharp_Vec2 size, int cond);
-IGSHARP_API void IGSharp_SetWindowCollapsedNamed(const char* name, bool collapsed, int cond);
-IGSHARP_API void IGSharp_SetWindowFocusNamed(const char* name);
-
-// fn-font-baked-style-stacks
-// Parameters stacks (font) - add to existing block (after IGSharp_GetFontSize)
-IGSHARP_API void* IGSharp_GetFontBaked(void);
-
-// Parameters stacks (shared) - add to existing block (after IGSharp_PushStyleVarVec2)
-IGSHARP_API void IGSharp_PushStyleVarX(int idx, float val_x);
-IGSHARP_API void IGSharp_PushStyleVarY(int idx, float val_y);
-
-// Style read access (alongside other style/color getters)
-IGSHARP_API IGSharp_Vec2 IGSharp_GetFontTexUvWhitePixel(void);
-IGSHARP_API IGSharp_Vec4 IGSharp_GetStyleColorVec4(int idx);
-
-// fn-cursor-axis-id-ptr
-IGSHARP_API float        IGSharp_GetCursorPosX(void);
-IGSHARP_API float        IGSharp_GetCursorPosY(void);
-IGSHARP_API void         IGSharp_SetCursorPosX(float local_x);
-IGSHARP_API void         IGSharp_SetCursorPosY(float local_y);
-IGSHARP_API IGSharp_Vec2 IGSharp_GetCursorStartPos(void);
-
-IGSHARP_API void         IGSharp_PushIDPtr(const void* ptr_id);
-IGSHARP_API void         IGSharp_PushIDStrRange(const char* str_id_begin, const char* str_id_end);
-IGSHARP_API unsigned int IGSharp_GetIDStrRange(const char* str_id_begin, const char* str_id_end);
-IGSHARP_API unsigned int IGSharp_GetIDPtr(const void* ptr_id);
-IGSHARP_API unsigned int IGSharp_GetIDInt(int int_id);
-
-// fn-combo-listbox-helpers
-// (add to "Widgets: Images" group, after IGSharp_ImageButton)
-IGSHARP_API void IGSharp_Image(unsigned long long tex_id, IGSharp_Vec2 image_size, IGSharp_Vec2 uv0, IGSharp_Vec2 uv1);
-
-// (add to "Widgets: Combo Box (Dropdown)" group, after IGSharp_EndCombo)
-IGSHARP_API bool IGSharp_Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items);
-IGSHARP_API bool IGSharp_ComboStr(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items);
-IGSHARP_API bool IGSharp_ComboCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height_in_items);
-
-// (add to "Widgets: List Boxes" group, after IGSharp_EndListBox)
-IGSHARP_API bool IGSharp_ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items);
-IGSHARP_API bool IGSharp_ListBoxCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int height_in_items);
-
-// fn-vslider-tree-value
-IGSHARP_API bool IGSharp_VSliderFloat(const char* label, IGSharp_Vec2 size, float* v, float v_min, float v_max, const char* format, int flags);
-IGSHARP_API bool IGSharp_VSliderInt(const char* label, IGSharp_Vec2 size, int* v, int v_min, int v_max, const char* format, int flags);
-
-IGSHARP_API void IGSharp_TreePushStr(const char* str_id);
-IGSHARP_API void IGSharp_TreePushPtr(const void* ptr_id);
-
-IGSHARP_API void IGSharp_SetNextItemStorageID(unsigned int storage_id);
-
-IGSHARP_API void IGSharp_ValueBool(const char* prefix, bool b);
-IGSHARP_API void IGSharp_ValueInt(const char* prefix, int v);
-IGSHARP_API void IGSharp_ValueUInt(const char* prefix, unsigned int v);
-IGSHARP_API void IGSharp_ValueFloat(const char* prefix, float v, const char* float_format);
-
-// fn-popup-extra-overloads
-IGSHARP_API void IGSharp_OpenPopupID(unsigned int id, int popup_flags);
-IGSHARP_API void IGSharp_OpenPopupOnItemClick(const char* str_id, int popup_flags);
-IGSHARP_API bool IGSharp_BeginPopupContextVoid(const char* str_id, int popup_flags);
-
-// fn-tables-angled-and-legacy-columns
-// Tables: angled headers
-IGSHARP_API void  IGSharp_TableAngledHeadersRow(void);
-
-// Legacy Columns API (prefer using Tables!)
-IGSHARP_API void  IGSharp_Columns(int count, const char* id, bool borders);
-IGSHARP_API void  IGSharp_NextColumn(void);
-IGSHARP_API int   IGSharp_GetColumnIndex(void);
-IGSHARP_API float IGSharp_GetColumnWidth(int column_index);
-IGSHARP_API void  IGSharp_SetColumnWidth(int column_index, float width);
-IGSHARP_API float IGSharp_GetColumnOffset(int column_index);
-IGSHARP_API void  IGSharp_SetColumnOffset(int column_index, float offset_x);
-IGSHARP_API int   IGSharp_GetColumnsCount(void);
-
-// fn-logging-capture
-// Logging/Capture
-// - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are automatically opened during logging.
-IGSHARP_API void IGSharp_LogToTTY(int auto_open_depth);
-IGSHARP_API void IGSharp_LogToFile(int auto_open_depth, const char* filename);
-IGSHARP_API void IGSharp_LogToClipboard(int auto_open_depth);
-IGSHARP_API void IGSharp_LogFinish(void);
-IGSHARP_API void IGSharp_LogButtons(void);
-IGSHARP_API void IGSharp_LogText(const char* text);
-
-// fn-clipping-nav-itemflags
-// Clipping
-IGSHARP_API void IGSharp_PushClipRect(IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current_clip_rect);
-IGSHARP_API void IGSharp_PopClipRect(void);
-
-// Keyboard/Gamepad Navigation
-IGSHARP_API void IGSharp_SetNavCursorVisible(bool visible);
-
-// Item/Widgets Utilities and Query Functions
-IGSHARP_API int  IGSharp_GetItemFlags(void); // ImGuiItemFlags
-
-// fn-misc-utilities
-IGSHARP_API bool         IGSharp_IsRectVisible(IGSharp_Vec2 size);
-IGSHARP_API bool         IGSharp_IsRectVisibleRange(IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max);
-IGSHARP_API double       IGSharp_GetTime(void);
-IGSHARP_API int          IGSharp_GetFrameCount(void);
-IGSHARP_API void*        IGSharp_GetDrawListSharedData(void);
-IGSHARP_API const char*  IGSharp_GetStyleColorName(int idx);
-IGSHARP_API void         IGSharp_SetStateStorage(void* storage);
-IGSHARP_API void*        IGSharp_GetStateStorage(void);
-
-// fn-inputs-keyboard-shortcut
 IGSHARP_API int          IGSharp_GetKeyPressedAmount(int key, float repeat_delay, float rate);
 IGSHARP_API const char*  IGSharp_GetKeyName(int key);
 IGSHARP_API void         IGSharp_SetNextFrameWantCaptureKeyboard(bool want_capture_keyboard);
@@ -581,53 +583,47 @@ IGSHARP_API void         IGSharp_SetNextItemShortcut(int key_chord, int flags);
 // Inputs Utilities: Key/Input Ownership
 IGSHARP_API void         IGSharp_SetItemKeyOwner(int key);
 
-// fn-inputs-mouse-extra
+// Inputs Utilities: Mouse
+IGSHARP_API bool         IGSharp_IsMouseDown(int button);
+IGSHARP_API bool         IGSharp_IsMouseClicked(int button, bool repeat);
+IGSHARP_API bool         IGSharp_IsMouseReleased(int button);
+IGSHARP_API bool         IGSharp_IsMouseDoubleClicked(int button);
 IGSHARP_API bool         IGSharp_IsMouseReleasedWithDelay(int button, float delay);
 IGSHARP_API int          IGSharp_GetMouseClickedCount(int button);
+IGSHARP_API bool         IGSharp_IsMouseHoveringRect(IGSharp_Vec2 r_min, IGSharp_Vec2 r_max, bool clip);
+IGSHARP_API bool         IGSharp_IsMousePosValid(const IGSharp_Vec2* mouse_pos);
 IGSHARP_API bool         IGSharp_IsAnyMouseDown(void);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetMousePos(void);
 IGSHARP_API IGSharp_Vec2 IGSharp_GetMousePosOnOpeningCurrentPopup(void);
+IGSHARP_API bool         IGSharp_IsMouseDragging(int button, float lock_threshold);
+IGSHARP_API IGSharp_Vec2 IGSharp_GetMouseDragDelta(int button, float lock_threshold);
 IGSHARP_API void         IGSharp_ResetMouseDragDelta(int button);
+IGSHARP_API int          IGSharp_GetMouseCursor(void);
+IGSHARP_API void         IGSharp_SetMouseCursor(int cursor_type);
 IGSHARP_API void         IGSharp_SetNextFrameWantCaptureMouse(bool want_capture_mouse);
 
-// fn-clipboard-ini-settings
-// --- Clipboard Utilities ---
+// Clipboard Utilities
 IGSHARP_API const char* IGSharp_GetClipboardText(void);
 IGSHARP_API void        IGSharp_SetClipboardText(const char* text);
 
-// --- Settings/.Ini Utilities ---
+// Settings/.Ini Utilities
 IGSHARP_API void        IGSharp_LoadIniSettingsFromDisk(const char* ini_filename);
 IGSHARP_API void        IGSharp_LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size);
 IGSHARP_API void        IGSharp_SaveIniSettingsToDisk(const char* ini_filename);
 IGSHARP_API const char* IGSharp_SaveIniSettingsToMemory(size_t* out_ini_size);
 
-// fn-debug-and-memory
-// Memory allocator function-pointer typedefs (see IGSharp_SetAllocatorFunctions)
-typedef void* (*IGSharp_MemAllocFunc)(size_t sz, void* user_data);
-typedef void  (*IGSharp_MemFreeFunc)(void* ptr, void* user_data);
-
-// Debug Tools
+// Debug Utilities
 IGSHARP_API void        IGSharp_DebugTextEncoding(const char* text);
 IGSHARP_API void        IGSharp_DebugFlashStyleColor(int idx); // ImGuiCol
 IGSHARP_API void        IGSharp_DebugStartItemPicker(void);
 IGSHARP_API bool        IGSharp_DebugCheckVersionAndDataLayout(const char* version_str, size_t sz_io, size_t sz_style, size_t sz_vec2, size_t sz_vec4, size_t sz_drawvert, size_t sz_drawidx);
 IGSHARP_API void        IGSharp_DebugLog(const char* text);
 
-// Memory Allocators
+// Memory Allocators (see IGSharp_MemAllocFunc/IGSharp_MemFreeFunc typedefs in the forward declarations section)
 IGSHARP_API void        IGSharp_SetAllocatorFunctions(IGSharp_MemAllocFunc alloc_func, IGSharp_MemFreeFunc free_func, void* user_data);
 IGSHARP_API void        IGSharp_GetAllocatorFunctions(IGSharp_MemAllocFunc* p_alloc_func, IGSharp_MemFreeFunc* p_free_func, void** p_user_data);
 IGSHARP_API void*       IGSharp_MemAlloc(size_t size);
 IGSHARP_API void        IGSharp_MemFree(void* ptr);
-
-// fn-misc-overloads-gaps
-// Child Windows (ImGuiID overload of BeginChild)
-IGSHARP_API bool IGSharp_BeginChildID(unsigned int id, IGSharp_Vec2 size, int child_flags, int window_flags);
-
-// CheckboxFlags (int and unsigned int overloads)
-IGSHARP_API bool IGSharp_CheckboxFlags(const char* label, int* flags, int flags_value);
-IGSHARP_API bool IGSharp_CheckboxFlagsUInt(const char* label, unsigned int* flags, unsigned int flags_value);
-
-// Tooltips (set tooltip if preceding item was hovered)
-IGSHARP_API void IGSharp_SetItemTooltip(const char* text);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Flags & Enumerations
@@ -637,168 +633,6 @@ IGSHARP_API void IGSharp_SetItemTooltip(const char* text);
 // validated per-value by static_assert in imgui_sharp_layout_check.cpp.
 // Used as array sizes in IGSharp_IO.KeysData and IGSharp_Style.Colors below,
 // and exposed so consumers don't need to redefine these enums independently.
-typedef enum {
-    IGSharp_Key_None = 0,
-    IGSharp_Key_NamedKey_BEGIN = 512,
-
-    IGSharp_Key_Tab = 512,
-    IGSharp_Key_LeftArrow,
-    IGSharp_Key_RightArrow,
-    IGSharp_Key_UpArrow,
-    IGSharp_Key_DownArrow,
-    IGSharp_Key_PageUp,
-    IGSharp_Key_PageDown,
-    IGSharp_Key_Home,
-    IGSharp_Key_End,
-    IGSharp_Key_Insert,
-    IGSharp_Key_Delete,
-    IGSharp_Key_Backspace,
-    IGSharp_Key_Space,
-    IGSharp_Key_Enter,
-    IGSharp_Key_Escape,
-    IGSharp_Key_LeftCtrl, IGSharp_Key_LeftShift, IGSharp_Key_LeftAlt, IGSharp_Key_LeftSuper,
-    IGSharp_Key_RightCtrl, IGSharp_Key_RightShift, IGSharp_Key_RightAlt, IGSharp_Key_RightSuper,
-    IGSharp_Key_Menu,
-    IGSharp_Key_0, IGSharp_Key_1, IGSharp_Key_2, IGSharp_Key_3, IGSharp_Key_4, IGSharp_Key_5, IGSharp_Key_6, IGSharp_Key_7, IGSharp_Key_8, IGSharp_Key_9,
-    IGSharp_Key_A, IGSharp_Key_B, IGSharp_Key_C, IGSharp_Key_D, IGSharp_Key_E, IGSharp_Key_F, IGSharp_Key_G, IGSharp_Key_H, IGSharp_Key_I, IGSharp_Key_J,
-    IGSharp_Key_K, IGSharp_Key_L, IGSharp_Key_M, IGSharp_Key_N, IGSharp_Key_O, IGSharp_Key_P, IGSharp_Key_Q, IGSharp_Key_R, IGSharp_Key_S, IGSharp_Key_T,
-    IGSharp_Key_U, IGSharp_Key_V, IGSharp_Key_W, IGSharp_Key_X, IGSharp_Key_Y, IGSharp_Key_Z,
-    IGSharp_Key_F1, IGSharp_Key_F2, IGSharp_Key_F3, IGSharp_Key_F4, IGSharp_Key_F5, IGSharp_Key_F6,
-    IGSharp_Key_F7, IGSharp_Key_F8, IGSharp_Key_F9, IGSharp_Key_F10, IGSharp_Key_F11, IGSharp_Key_F12,
-    IGSharp_Key_F13, IGSharp_Key_F14, IGSharp_Key_F15, IGSharp_Key_F16, IGSharp_Key_F17, IGSharp_Key_F18,
-    IGSharp_Key_F19, IGSharp_Key_F20, IGSharp_Key_F21, IGSharp_Key_F22, IGSharp_Key_F23, IGSharp_Key_F24,
-    IGSharp_Key_Apostrophe,
-    IGSharp_Key_Comma,
-    IGSharp_Key_Minus,
-    IGSharp_Key_Period,
-    IGSharp_Key_Slash,
-    IGSharp_Key_Semicolon,
-    IGSharp_Key_Equal,
-    IGSharp_Key_LeftBracket,
-    IGSharp_Key_Backslash,
-    IGSharp_Key_RightBracket,
-    IGSharp_Key_GraveAccent,
-    IGSharp_Key_CapsLock,
-    IGSharp_Key_ScrollLock,
-    IGSharp_Key_NumLock,
-    IGSharp_Key_PrintScreen,
-    IGSharp_Key_Pause,
-    IGSharp_Key_Keypad0, IGSharp_Key_Keypad1, IGSharp_Key_Keypad2, IGSharp_Key_Keypad3, IGSharp_Key_Keypad4,
-    IGSharp_Key_Keypad5, IGSharp_Key_Keypad6, IGSharp_Key_Keypad7, IGSharp_Key_Keypad8, IGSharp_Key_Keypad9,
-    IGSharp_Key_KeypadDecimal,
-    IGSharp_Key_KeypadDivide,
-    IGSharp_Key_KeypadMultiply,
-    IGSharp_Key_KeypadSubtract,
-    IGSharp_Key_KeypadAdd,
-    IGSharp_Key_KeypadEnter,
-    IGSharp_Key_KeypadEqual,
-    IGSharp_Key_AppBack,
-    IGSharp_Key_AppForward,
-    IGSharp_Key_Oem102,
-
-    IGSharp_Key_GamepadStart,
-    IGSharp_Key_GamepadBack,
-    IGSharp_Key_GamepadFaceLeft,
-    IGSharp_Key_GamepadFaceRight,
-    IGSharp_Key_GamepadFaceUp,
-    IGSharp_Key_GamepadFaceDown,
-    IGSharp_Key_GamepadDpadLeft,
-    IGSharp_Key_GamepadDpadRight,
-    IGSharp_Key_GamepadDpadUp,
-    IGSharp_Key_GamepadDpadDown,
-    IGSharp_Key_GamepadL1,
-    IGSharp_Key_GamepadR1,
-    IGSharp_Key_GamepadL2,
-    IGSharp_Key_GamepadR2,
-    IGSharp_Key_GamepadL3,
-    IGSharp_Key_GamepadR3,
-    IGSharp_Key_GamepadLStickLeft,
-    IGSharp_Key_GamepadLStickRight,
-    IGSharp_Key_GamepadLStickUp,
-    IGSharp_Key_GamepadLStickDown,
-    IGSharp_Key_GamepadRStickLeft,
-    IGSharp_Key_GamepadRStickRight,
-    IGSharp_Key_GamepadRStickUp,
-    IGSharp_Key_GamepadRStickDown,
-
-    IGSharp_Key_MouseLeft, IGSharp_Key_MouseRight, IGSharp_Key_MouseMiddle, IGSharp_Key_MouseX1, IGSharp_Key_MouseX2, IGSharp_Key_MouseWheelX, IGSharp_Key_MouseWheelY,
-
-    IGSharp_Key_ReservedForModCtrl, IGSharp_Key_ReservedForModShift, IGSharp_Key_ReservedForModAlt, IGSharp_Key_ReservedForModSuper,
-
-    IGSharp_Key_NamedKey_END,
-    IGSharp_Key_NamedKey_COUNT = IGSharp_Key_NamedKey_END - IGSharp_Key_NamedKey_BEGIN,
-
-    IGSharp_Mod_None  = 0,
-    IGSharp_Mod_Ctrl  = 1 << 12,
-    IGSharp_Mod_Shift = 1 << 13,
-    IGSharp_Mod_Alt   = 1 << 14,
-    IGSharp_Mod_Super = 1 << 15,
-    IGSharp_Mod_Mask_ = 0xF000,
-} IGSharp_Key;
-
-typedef enum {
-    IGSharp_Col_Text,
-    IGSharp_Col_TextDisabled,
-    IGSharp_Col_WindowBg,
-    IGSharp_Col_ChildBg,
-    IGSharp_Col_PopupBg,
-    IGSharp_Col_Border,
-    IGSharp_Col_BorderShadow,
-    IGSharp_Col_FrameBg,
-    IGSharp_Col_FrameBgHovered,
-    IGSharp_Col_FrameBgActive,
-    IGSharp_Col_TitleBg,
-    IGSharp_Col_TitleBgActive,
-    IGSharp_Col_TitleBgCollapsed,
-    IGSharp_Col_MenuBarBg,
-    IGSharp_Col_ScrollbarBg,
-    IGSharp_Col_ScrollbarGrab,
-    IGSharp_Col_ScrollbarGrabHovered,
-    IGSharp_Col_ScrollbarGrabActive,
-    IGSharp_Col_CheckMark,
-    IGSharp_Col_SliderGrab,
-    IGSharp_Col_SliderGrabActive,
-    IGSharp_Col_Button,
-    IGSharp_Col_ButtonHovered,
-    IGSharp_Col_ButtonActive,
-    IGSharp_Col_Header,
-    IGSharp_Col_HeaderHovered,
-    IGSharp_Col_HeaderActive,
-    IGSharp_Col_Separator,
-    IGSharp_Col_SeparatorHovered,
-    IGSharp_Col_SeparatorActive,
-    IGSharp_Col_ResizeGrip,
-    IGSharp_Col_ResizeGripHovered,
-    IGSharp_Col_ResizeGripActive,
-    IGSharp_Col_InputTextCursor,
-    IGSharp_Col_TabHovered,
-    IGSharp_Col_Tab,
-    IGSharp_Col_TabSelected,
-    IGSharp_Col_TabSelectedOverline,
-    IGSharp_Col_TabDimmed,
-    IGSharp_Col_TabDimmedSelected,
-    IGSharp_Col_TabDimmedSelectedOverline,
-    IGSharp_Col_PlotLines,
-    IGSharp_Col_PlotLinesHovered,
-    IGSharp_Col_PlotHistogram,
-    IGSharp_Col_PlotHistogramHovered,
-    IGSharp_Col_TableHeaderBg,
-    IGSharp_Col_TableBorderStrong,
-    IGSharp_Col_TableBorderLight,
-    IGSharp_Col_TableRowBg,
-    IGSharp_Col_TableRowBgAlt,
-    IGSharp_Col_TextLink,
-    IGSharp_Col_TextSelectedBg,
-    IGSharp_Col_TreeLines,
-    IGSharp_Col_DragDropTarget,
-    IGSharp_Col_DragDropTargetBg,
-    IGSharp_Col_UnsavedMarker,
-    IGSharp_Col_NavCursor,
-    IGSharp_Col_NavWindowingHighlight,
-    IGSharp_Col_NavWindowingDimBg,
-    IGSharp_Col_ModalWindowDimBg,
-    IGSharp_Col_COUNT,
-} IGSharp_Col;
 
 // IGSharp_WindowFlags
 // Mirrored from upstream ImGuiWindowFlags_. Flags for Begin(), BeginChild().
@@ -907,6 +741,35 @@ typedef enum {
     IGSharp_InputTextFlags_WordWrap            = 1 << 24,  // InputTextMultiline(): word-wrap lines that are too long
 } IGSharp_InputTextFlags_;
 
+// IGSharp_TreeNodeFlags
+// Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader() etc.
+// Mirrored from upstream ImGuiTreeNodeFlags_ — values validated per-value by
+// static_assert in imgui_sharp_layout_check.cpp.
+typedef enum {
+    IGSharp_TreeNodeFlags_None                 = 0,
+    IGSharp_TreeNodeFlags_Selected             = 1 << 0,   // Draw as selected
+    IGSharp_TreeNodeFlags_Framed               = 1 << 1,   // Draw frame with background (e.g. for CollapsingHeader)
+    IGSharp_TreeNodeFlags_AllowOverlap         = 1 << 2,   // Hit testing will allow subsequent widgets to overlap this one
+    IGSharp_TreeNodeFlags_NoTreePushOnOpen     = 1 << 3,   // Don't do a TreePush() when open (e.g. for CollapsingHeader)
+    IGSharp_TreeNodeFlags_NoAutoOpenOnLog      = 1 << 4,   // Don't automatically and temporarily open node when Logging is active
+    IGSharp_TreeNodeFlags_DefaultOpen          = 1 << 5,   // Default node to be open
+    IGSharp_TreeNodeFlags_OpenOnDoubleClick    = 1 << 6,   // Open on double-click instead of simple click
+    IGSharp_TreeNodeFlags_OpenOnArrow          = 1 << 7,   // Open when clicking on the arrow part
+    IGSharp_TreeNodeFlags_Leaf                 = 1 << 8,   // No collapsing, no arrow (use as a convenience for leaf nodes)
+    IGSharp_TreeNodeFlags_Bullet               = 1 << 9,   // Display a bullet instead of arrow
+    IGSharp_TreeNodeFlags_FramePadding         = 1 << 10,  // Use FramePadding to vertically align text baseline to regular widget height
+    IGSharp_TreeNodeFlags_SpanAvailWidth       = 1 << 11,  // Extend hit box to the right-most edge, even if not framed
+    IGSharp_TreeNodeFlags_SpanFullWidth        = 1 << 12,  // Extend hit box to the left-most and right-most edges
+    IGSharp_TreeNodeFlags_SpanLabelWidth       = 1 << 13,  // Narrow hit box + narrow hovering highlight, will only cover the label text
+    IGSharp_TreeNodeFlags_SpanAllColumns       = 1 << 14,  // Frame will span all columns of its container table
+    IGSharp_TreeNodeFlags_LabelSpanAllColumns  = 1 << 15,  // Label will span all columns of its container table
+    IGSharp_TreeNodeFlags_NavLeftJumpsToParent = 1 << 17,  // Nav: left arrow moves back to parent
+    IGSharp_TreeNodeFlags_CollapsingHeader     = IGSharp_TreeNodeFlags_Framed | IGSharp_TreeNodeFlags_NoTreePushOnOpen | IGSharp_TreeNodeFlags_NoAutoOpenOnLog,
+    IGSharp_TreeNodeFlags_DrawLinesNone        = 1 << 18,  // No lines drawn
+    IGSharp_TreeNodeFlags_DrawLinesFull        = 1 << 19,  // Horizontal lines to child nodes, vertical line covers full contents
+    IGSharp_TreeNodeFlags_DrawLinesToNodes     = 1 << 20,  // Horizontal lines to child nodes, vertical line down to bottom-most child node
+} IGSharp_TreeNodeFlags;
+
 // IGSharp_PopupFlags
 // Flags for OpenPopup*(), BeginPopupContext*(), IsPopupOpen() -> ImGuiPopupFlags_
 typedef enum {
@@ -924,6 +787,20 @@ typedef enum {
     IGSharp_PopupFlags_MouseButtonMask_        = 0x0C,     // [Internal]
     IGSharp_PopupFlags_InvalidMask_            = 0x03,     // [Internal] Reserve legacy bits 0-1 to detect incorrectly passing 1 or 2 to the function.
 } IGSharp_PopupFlags;
+
+// IGSharp_SelectableFlags
+// Flags for Selectable(). Mirror of ImGuiSelectableFlags_ — passed to functions as plain int.
+// Values validated per-value by static_assert in imgui_sharp_layout_check.cpp.
+typedef enum {
+    IGSharp_SelectableFlags_None              = 0,
+    IGSharp_SelectableFlags_NoAutoClosePopups = 1 << 0,   // Clicking this doesn't close parent popup window (overrides ImGuiItemFlags_AutoClosePopups)
+    IGSharp_SelectableFlags_SpanAllColumns    = 1 << 1,   // Frame will span all columns of its container table (text will still fit in current column)
+    IGSharp_SelectableFlags_AllowDoubleClick  = 1 << 2,   // Generate press events on double clicks too
+    IGSharp_SelectableFlags_Disabled          = 1 << 3,   // Cannot be selected, display grayed out text
+    IGSharp_SelectableFlags_AllowOverlap      = 1 << 4,   // Hit testing will allow subsequent widgets to overlap this one
+    IGSharp_SelectableFlags_Highlight         = 1 << 5,   // Make the item be displayed as if it is hovered
+    IGSharp_SelectableFlags_SelectOnNav       = 1 << 6,   // Auto-select when moved into, unless Ctrl is held
+} IGSharp_SelectableFlags;
 
 // IGSharp_ComboFlags
 typedef enum {
@@ -1032,6 +909,11 @@ typedef enum {
     IGSharp_DragDropFlags_AcceptPeekOnly           = IGSharp_DragDropFlags_AcceptBeforeDelivery | IGSharp_DragDropFlags_AcceptNoDrawDefaultRect, // For peeking ahead and inspecting the payload before delivery.
 } IGSharp_DragDropFlags;
 
+// Standard drag-drop payload type strings emitted by the ColorEdit*/ColorPicker* widgets
+// (mirror of IMGUI_PAYLOAD_TYPE_COLOR_3F / _4F). Pass to IGSharp_AcceptDragDropPayload.
+#define IGSHARP_PAYLOAD_TYPE_COLOR_3F "_COL3F"   // float[3]: Standard type for colors, without alpha. User code may use this type.
+#define IGSHARP_PAYLOAD_TYPE_COLOR_4F "_COL4F"   // float[4]: Standard type for colors. User code may use this type.
+
 // IGSharp_DataType
 typedef enum {
     IGSharp_DataType_S8,        // signed char / char (with sensible compilers)
@@ -1049,6 +931,17 @@ typedef enum {
     IGSharp_DataType_COUNT,
 } IGSharp_DataType;
 
+// IGSharp_Dir
+// A cardinal direction (mirror of ImGuiDir)
+typedef enum {
+    IGSharp_Dir_None  = -1,
+    IGSharp_Dir_Left  = 0,
+    IGSharp_Dir_Right  = 1,
+    IGSharp_Dir_Up    = 2,
+    IGSharp_Dir_Down  = 3,
+    IGSharp_Dir_COUNT,
+} IGSharp_Dir;
+
 // IGSharp_SortDirection
 // A sorting direction (ascending or descending) -> ImGuiSortDirection (upstream backing type ImU8)
 typedef enum {
@@ -1056,6 +949,106 @@ typedef enum {
     IGSharp_SortDirection_Ascending   = 1,    // Ascending = 0->9, A->Z etc.
     IGSharp_SortDirection_Descending  = 2,    // Descending = 9->0, Z->A etc.
 } IGSharp_SortDirection;
+
+// IGSharp_Key
+typedef enum {
+    IGSharp_Key_None = 0,
+    IGSharp_Key_NamedKey_BEGIN = 512,
+
+    IGSharp_Key_Tab = 512,
+    IGSharp_Key_LeftArrow,
+    IGSharp_Key_RightArrow,
+    IGSharp_Key_UpArrow,
+    IGSharp_Key_DownArrow,
+    IGSharp_Key_PageUp,
+    IGSharp_Key_PageDown,
+    IGSharp_Key_Home,
+    IGSharp_Key_End,
+    IGSharp_Key_Insert,
+    IGSharp_Key_Delete,
+    IGSharp_Key_Backspace,
+    IGSharp_Key_Space,
+    IGSharp_Key_Enter,
+    IGSharp_Key_Escape,
+    IGSharp_Key_LeftCtrl, IGSharp_Key_LeftShift, IGSharp_Key_LeftAlt, IGSharp_Key_LeftSuper,
+    IGSharp_Key_RightCtrl, IGSharp_Key_RightShift, IGSharp_Key_RightAlt, IGSharp_Key_RightSuper,
+    IGSharp_Key_Menu,
+    IGSharp_Key_0, IGSharp_Key_1, IGSharp_Key_2, IGSharp_Key_3, IGSharp_Key_4, IGSharp_Key_5, IGSharp_Key_6, IGSharp_Key_7, IGSharp_Key_8, IGSharp_Key_9,
+    IGSharp_Key_A, IGSharp_Key_B, IGSharp_Key_C, IGSharp_Key_D, IGSharp_Key_E, IGSharp_Key_F, IGSharp_Key_G, IGSharp_Key_H, IGSharp_Key_I, IGSharp_Key_J,
+    IGSharp_Key_K, IGSharp_Key_L, IGSharp_Key_M, IGSharp_Key_N, IGSharp_Key_O, IGSharp_Key_P, IGSharp_Key_Q, IGSharp_Key_R, IGSharp_Key_S, IGSharp_Key_T,
+    IGSharp_Key_U, IGSharp_Key_V, IGSharp_Key_W, IGSharp_Key_X, IGSharp_Key_Y, IGSharp_Key_Z,
+    IGSharp_Key_F1, IGSharp_Key_F2, IGSharp_Key_F3, IGSharp_Key_F4, IGSharp_Key_F5, IGSharp_Key_F6,
+    IGSharp_Key_F7, IGSharp_Key_F8, IGSharp_Key_F9, IGSharp_Key_F10, IGSharp_Key_F11, IGSharp_Key_F12,
+    IGSharp_Key_F13, IGSharp_Key_F14, IGSharp_Key_F15, IGSharp_Key_F16, IGSharp_Key_F17, IGSharp_Key_F18,
+    IGSharp_Key_F19, IGSharp_Key_F20, IGSharp_Key_F21, IGSharp_Key_F22, IGSharp_Key_F23, IGSharp_Key_F24,
+    IGSharp_Key_Apostrophe,
+    IGSharp_Key_Comma,
+    IGSharp_Key_Minus,
+    IGSharp_Key_Period,
+    IGSharp_Key_Slash,
+    IGSharp_Key_Semicolon,
+    IGSharp_Key_Equal,
+    IGSharp_Key_LeftBracket,
+    IGSharp_Key_Backslash,
+    IGSharp_Key_RightBracket,
+    IGSharp_Key_GraveAccent,
+    IGSharp_Key_CapsLock,
+    IGSharp_Key_ScrollLock,
+    IGSharp_Key_NumLock,
+    IGSharp_Key_PrintScreen,
+    IGSharp_Key_Pause,
+    IGSharp_Key_Keypad0, IGSharp_Key_Keypad1, IGSharp_Key_Keypad2, IGSharp_Key_Keypad3, IGSharp_Key_Keypad4,
+    IGSharp_Key_Keypad5, IGSharp_Key_Keypad6, IGSharp_Key_Keypad7, IGSharp_Key_Keypad8, IGSharp_Key_Keypad9,
+    IGSharp_Key_KeypadDecimal,
+    IGSharp_Key_KeypadDivide,
+    IGSharp_Key_KeypadMultiply,
+    IGSharp_Key_KeypadSubtract,
+    IGSharp_Key_KeypadAdd,
+    IGSharp_Key_KeypadEnter,
+    IGSharp_Key_KeypadEqual,
+    IGSharp_Key_AppBack,
+    IGSharp_Key_AppForward,
+    IGSharp_Key_Oem102,
+
+    IGSharp_Key_GamepadStart,
+    IGSharp_Key_GamepadBack,
+    IGSharp_Key_GamepadFaceLeft,
+    IGSharp_Key_GamepadFaceRight,
+    IGSharp_Key_GamepadFaceUp,
+    IGSharp_Key_GamepadFaceDown,
+    IGSharp_Key_GamepadDpadLeft,
+    IGSharp_Key_GamepadDpadRight,
+    IGSharp_Key_GamepadDpadUp,
+    IGSharp_Key_GamepadDpadDown,
+    IGSharp_Key_GamepadL1,
+    IGSharp_Key_GamepadR1,
+    IGSharp_Key_GamepadL2,
+    IGSharp_Key_GamepadR2,
+    IGSharp_Key_GamepadL3,
+    IGSharp_Key_GamepadR3,
+    IGSharp_Key_GamepadLStickLeft,
+    IGSharp_Key_GamepadLStickRight,
+    IGSharp_Key_GamepadLStickUp,
+    IGSharp_Key_GamepadLStickDown,
+    IGSharp_Key_GamepadRStickLeft,
+    IGSharp_Key_GamepadRStickRight,
+    IGSharp_Key_GamepadRStickUp,
+    IGSharp_Key_GamepadRStickDown,
+
+    IGSharp_Key_MouseLeft, IGSharp_Key_MouseRight, IGSharp_Key_MouseMiddle, IGSharp_Key_MouseX1, IGSharp_Key_MouseX2, IGSharp_Key_MouseWheelX, IGSharp_Key_MouseWheelY,
+
+    IGSharp_Key_ReservedForModCtrl, IGSharp_Key_ReservedForModShift, IGSharp_Key_ReservedForModAlt, IGSharp_Key_ReservedForModSuper,
+
+    IGSharp_Key_NamedKey_END,
+    IGSharp_Key_NamedKey_COUNT = IGSharp_Key_NamedKey_END - IGSharp_Key_NamedKey_BEGIN,
+
+    IGSharp_Mod_None  = 0,
+    IGSharp_Mod_Ctrl  = 1 << 12,
+    IGSharp_Mod_Shift = 1 << 13,
+    IGSharp_Mod_Alt   = 1 << 14,
+    IGSharp_Mod_Super = 1 << 15,
+    IGSharp_Mod_Mask_ = 0xF000,
+} IGSharp_Key;
 
 // IGSharp_InputFlags
 // Flags for Shortcut(), SetNextItemShortcut().
@@ -1105,6 +1098,71 @@ typedef enum {
     IGSharp_BackendFlags_RendererHasTextures  = 1 << 4,   // Backend Renderer supports ImTextureData requests to create/update/destroy textures.
 } IGSharp_BackendFlags;
 
+// IGSharp_Col
+typedef enum {
+    IGSharp_Col_Text,
+    IGSharp_Col_TextDisabled,
+    IGSharp_Col_WindowBg,
+    IGSharp_Col_ChildBg,
+    IGSharp_Col_PopupBg,
+    IGSharp_Col_Border,
+    IGSharp_Col_BorderShadow,
+    IGSharp_Col_FrameBg,
+    IGSharp_Col_FrameBgHovered,
+    IGSharp_Col_FrameBgActive,
+    IGSharp_Col_TitleBg,
+    IGSharp_Col_TitleBgActive,
+    IGSharp_Col_TitleBgCollapsed,
+    IGSharp_Col_MenuBarBg,
+    IGSharp_Col_ScrollbarBg,
+    IGSharp_Col_ScrollbarGrab,
+    IGSharp_Col_ScrollbarGrabHovered,
+    IGSharp_Col_ScrollbarGrabActive,
+    IGSharp_Col_CheckMark,
+    IGSharp_Col_SliderGrab,
+    IGSharp_Col_SliderGrabActive,
+    IGSharp_Col_Button,
+    IGSharp_Col_ButtonHovered,
+    IGSharp_Col_ButtonActive,
+    IGSharp_Col_Header,
+    IGSharp_Col_HeaderHovered,
+    IGSharp_Col_HeaderActive,
+    IGSharp_Col_Separator,
+    IGSharp_Col_SeparatorHovered,
+    IGSharp_Col_SeparatorActive,
+    IGSharp_Col_ResizeGrip,
+    IGSharp_Col_ResizeGripHovered,
+    IGSharp_Col_ResizeGripActive,
+    IGSharp_Col_InputTextCursor,
+    IGSharp_Col_TabHovered,
+    IGSharp_Col_Tab,
+    IGSharp_Col_TabSelected,
+    IGSharp_Col_TabSelectedOverline,
+    IGSharp_Col_TabDimmed,
+    IGSharp_Col_TabDimmedSelected,
+    IGSharp_Col_TabDimmedSelectedOverline,
+    IGSharp_Col_PlotLines,
+    IGSharp_Col_PlotLinesHovered,
+    IGSharp_Col_PlotHistogram,
+    IGSharp_Col_PlotHistogramHovered,
+    IGSharp_Col_TableHeaderBg,
+    IGSharp_Col_TableBorderStrong,
+    IGSharp_Col_TableBorderLight,
+    IGSharp_Col_TableRowBg,
+    IGSharp_Col_TableRowBgAlt,
+    IGSharp_Col_TextLink,
+    IGSharp_Col_TextSelectedBg,
+    IGSharp_Col_TreeLines,
+    IGSharp_Col_DragDropTarget,
+    IGSharp_Col_DragDropTargetBg,
+    IGSharp_Col_UnsavedMarker,
+    IGSharp_Col_NavCursor,
+    IGSharp_Col_NavWindowingHighlight,
+    IGSharp_Col_NavWindowingDimBg,
+    IGSharp_Col_ModalWindowDimBg,
+    IGSharp_Col_COUNT,
+} IGSharp_Col;
+
 // IGSharp_StyleVar
 // Enum: A variable identifier for styling (mirror of ImGuiStyleVar_)
 typedef enum {
@@ -1151,6 +1209,19 @@ typedef enum {
     IGSharp_StyleVar_SeparatorTextPadding,        // ImVec2    SeparatorTextPadding
     IGSharp_StyleVar_COUNT,
 } IGSharp_StyleVar;
+
+// IGSharp_ButtonFlags
+// Flags for InvisibleButton() [public subset; extended in imgui_internal.h].
+// Passed to functions as plain int. Values validated in imgui_sharp_layout_check.cpp.
+typedef enum {
+    IGSharp_ButtonFlags_None             = 0,
+    IGSharp_ButtonFlags_MouseButtonLeft  = 1 << 0,  // React on left mouse button (default)
+    IGSharp_ButtonFlags_MouseButtonRight = 1 << 1,  // React on right mouse button
+    IGSharp_ButtonFlags_MouseButtonMiddle= 1 << 2,  // React on center mouse button
+    IGSharp_ButtonFlags_MouseButtonMask_ = IGSharp_ButtonFlags_MouseButtonLeft | IGSharp_ButtonFlags_MouseButtonRight | IGSharp_ButtonFlags_MouseButtonMiddle, // [Internal]
+    IGSharp_ButtonFlags_EnableNav        = 1 << 3,  // InvisibleButton(): do not disable navigation/tabbing. Otherwise disabled by default.
+    IGSharp_ButtonFlags_AllowOverlap     = 1 << 12, // Hit testing will allow subsequent widgets to overlap this one.
+} IGSharp_ButtonFlags;
 
 // IGSharp_ColorEditFlags
 // Flags for ColorEdit3/4(), ColorPicker3/4(), ColorButton(). ImGuiColorEditFlags.
@@ -1215,6 +1286,14 @@ typedef enum {
     IGSharp_SliderFlags_InvalidMask_    = 0x7000000F,   // [Internal] Bits used to detect a miscast 'float power' legacy argument.
 } IGSharp_SliderFlags;
 
+// IGSharp_MouseButton
+typedef enum {
+    IGSharp_MouseButton_Left = 0,
+    IGSharp_MouseButton_Right = 1,
+    IGSharp_MouseButton_Middle = 2,
+    IGSharp_MouseButton_COUNT = 5,
+} IGSharp_MouseButton;
+
 // IGSharp_MouseCursor
 typedef enum {
     IGSharp_MouseCursor_None = -1,
@@ -1253,94 +1332,9 @@ typedef enum {
     IGSharp_Cond_Appearing    = 1 << 3,   // Set the variable if the object/window is appearing after being hidden/inactive (or the first time)
 } IGSharp_Cond;
 
-// IGSharp_TreeNodeFlags
-// Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader() etc.
-// Mirrored from upstream ImGuiTreeNodeFlags_ — values validated per-value by
-// static_assert in imgui_sharp_layout_check.cpp.
-typedef enum {
-    IGSharp_TreeNodeFlags_None                 = 0,
-    IGSharp_TreeNodeFlags_Selected             = 1 << 0,   // Draw as selected
-    IGSharp_TreeNodeFlags_Framed               = 1 << 1,   // Draw frame with background (e.g. for CollapsingHeader)
-    IGSharp_TreeNodeFlags_AllowOverlap         = 1 << 2,   // Hit testing will allow subsequent widgets to overlap this one
-    IGSharp_TreeNodeFlags_NoTreePushOnOpen     = 1 << 3,   // Don't do a TreePush() when open (e.g. for CollapsingHeader)
-    IGSharp_TreeNodeFlags_NoAutoOpenOnLog      = 1 << 4,   // Don't automatically and temporarily open node when Logging is active
-    IGSharp_TreeNodeFlags_DefaultOpen          = 1 << 5,   // Default node to be open
-    IGSharp_TreeNodeFlags_OpenOnDoubleClick    = 1 << 6,   // Open on double-click instead of simple click
-    IGSharp_TreeNodeFlags_OpenOnArrow          = 1 << 7,   // Open when clicking on the arrow part
-    IGSharp_TreeNodeFlags_Leaf                 = 1 << 8,   // No collapsing, no arrow (use as a convenience for leaf nodes)
-    IGSharp_TreeNodeFlags_Bullet               = 1 << 9,   // Display a bullet instead of arrow
-    IGSharp_TreeNodeFlags_FramePadding         = 1 << 10,  // Use FramePadding to vertically align text baseline to regular widget height
-    IGSharp_TreeNodeFlags_SpanAvailWidth       = 1 << 11,  // Extend hit box to the right-most edge, even if not framed
-    IGSharp_TreeNodeFlags_SpanFullWidth        = 1 << 12,  // Extend hit box to the left-most and right-most edges
-    IGSharp_TreeNodeFlags_SpanLabelWidth       = 1 << 13,  // Narrow hit box + narrow hovering highlight, will only cover the label text
-    IGSharp_TreeNodeFlags_SpanAllColumns       = 1 << 14,  // Frame will span all columns of its container table
-    IGSharp_TreeNodeFlags_LabelSpanAllColumns  = 1 << 15,  // Label will span all columns of its container table
-    IGSharp_TreeNodeFlags_NavLeftJumpsToParent = 1 << 17,  // Nav: left arrow moves back to parent
-    IGSharp_TreeNodeFlags_CollapsingHeader     = IGSharp_TreeNodeFlags_Framed | IGSharp_TreeNodeFlags_NoTreePushOnOpen | IGSharp_TreeNodeFlags_NoAutoOpenOnLog,
-    IGSharp_TreeNodeFlags_DrawLinesNone        = 1 << 18,  // No lines drawn
-    IGSharp_TreeNodeFlags_DrawLinesFull        = 1 << 19,  // Horizontal lines to child nodes, vertical line covers full contents
-    IGSharp_TreeNodeFlags_DrawLinesToNodes     = 1 << 20,  // Horizontal lines to child nodes, vertical line down to bottom-most child node
-} IGSharp_TreeNodeFlags;
-
-// IGSharp_SelectableFlags
-// Flags for Selectable(). Mirror of ImGuiSelectableFlags_ — passed to functions as plain int.
-// Values validated per-value by static_assert in imgui_sharp_layout_check.cpp.
-typedef enum {
-    IGSharp_SelectableFlags_None              = 0,
-    IGSharp_SelectableFlags_NoAutoClosePopups = 1 << 0,   // Clicking this doesn't close parent popup window (overrides ImGuiItemFlags_AutoClosePopups)
-    IGSharp_SelectableFlags_SpanAllColumns    = 1 << 1,   // Frame will span all columns of its container table (text will still fit in current column)
-    IGSharp_SelectableFlags_AllowDoubleClick  = 1 << 2,   // Generate press events on double clicks too
-    IGSharp_SelectableFlags_Disabled          = 1 << 3,   // Cannot be selected, display grayed out text
-    IGSharp_SelectableFlags_AllowOverlap      = 1 << 4,   // Hit testing will allow subsequent widgets to overlap this one
-    IGSharp_SelectableFlags_Highlight         = 1 << 5,   // Make the item be displayed as if it is hovered
-    IGSharp_SelectableFlags_SelectOnNav       = 1 << 6,   // Auto-select when moved into, unless Ctrl is held
-} IGSharp_SelectableFlags;
-
-// IGSharp_Dir
-// A cardinal direction (mirror of ImGuiDir)
-typedef enum {
-    IGSharp_Dir_None  = -1,
-    IGSharp_Dir_Left  = 0,
-    IGSharp_Dir_Right  = 1,
-    IGSharp_Dir_Up    = 2,
-    IGSharp_Dir_Down  = 3,
-    IGSharp_Dir_COUNT,
-} IGSharp_Dir;
-
-// IGSharp_ButtonFlags
-// Flags for InvisibleButton() [public subset; extended in imgui_internal.h].
-// Passed to functions as plain int. Values validated in imgui_sharp_layout_check.cpp.
-typedef enum {
-    IGSharp_ButtonFlags_None             = 0,
-    IGSharp_ButtonFlags_MouseButtonLeft  = 1 << 0,  // React on left mouse button (default)
-    IGSharp_ButtonFlags_MouseButtonRight = 1 << 1,  // React on right mouse button
-    IGSharp_ButtonFlags_MouseButtonMiddle= 1 << 2,  // React on center mouse button
-    IGSharp_ButtonFlags_MouseButtonMask_ = IGSharp_ButtonFlags_MouseButtonLeft | IGSharp_ButtonFlags_MouseButtonRight | IGSharp_ButtonFlags_MouseButtonMiddle, // [Internal]
-    IGSharp_ButtonFlags_EnableNav        = 1 << 3,  // InvisibleButton(): do not disable navigation/tabbing. Otherwise disabled by default.
-    IGSharp_ButtonFlags_AllowOverlap     = 1 << 12, // Hit testing will allow subsequent widgets to overlap this one.
-} IGSharp_ButtonFlags;
-
-// IGSharp_MouseButton
-typedef enum {
-    IGSharp_MouseButton_Left = 0,
-    IGSharp_MouseButton_Right = 1,
-    IGSharp_MouseButton_Middle = 2,
-    IGSharp_MouseButton_COUNT = 5,
-} IGSharp_MouseButton;
-
 //-----------------------------------------------------------------------------
 // [SECTION] Tables API flags and structures (ImGuiTableFlags, ImGuiTableColumnFlags, ImGuiTableRowFlags, ImGuiTableBgTarget, ImGuiTableSortSpecs, ImGuiTableColumnSortSpecs)
 //-----------------------------------------------------------------------------
-
-IGSHARP_API int   IGSharp_TableSortSpecs_GetSpecsCount(void* specs);
-IGSHARP_API void* IGSharp_TableSortSpecs_GetSpec(void* specs, int index);
-IGSHARP_API bool  IGSharp_TableSortSpecs_GetSpecsDirty(void* specs);
-IGSHARP_API void  IGSharp_TableSortSpecs_SetSpecsDirty(void* specs, bool v);
-
-IGSHARP_API unsigned int IGSharp_TableColumnSortSpecs_GetColumnUserID(void* spec);
-IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetColumnIndex(void* spec);
-IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortOrder(void* spec);
-IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortDirection(void* spec);
 
 // IGSharp_TableFlags
 // Flags for IGSharp_BeginTable(). Mirrored from ImGuiTableFlags_.
@@ -1444,87 +1438,29 @@ typedef enum {
     IGSharp_TableBgTarget_CellBg = 3, // Set cell background color (top-most color)
 } IGSharp_TableBgTarget;
 
+// ImGuiTableSortSpecs (opaque; obtain via IGSharp_TableGetSortSpecs())
+IGSHARP_API int   IGSharp_TableSortSpecs_GetSpecsCount(void* specs);
+IGSHARP_API void* IGSharp_TableSortSpecs_GetSpec(void* specs, int index);
+IGSHARP_API bool  IGSharp_TableSortSpecs_GetSpecsDirty(void* specs);
+IGSHARP_API void  IGSharp_TableSortSpecs_SetSpecsDirty(void* specs, bool v);
+
+// ImGuiTableColumnSortSpecs (opaque; obtain via IGSharp_TableSortSpecs_GetSpec())
+IGSHARP_API unsigned int IGSharp_TableColumnSortSpecs_GetColumnUserID(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetColumnIndex(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortOrder(void* spec);
+IGSHARP_API int          IGSharp_TableColumnSortSpecs_GetSortDirection(void* spec);
+
 //-----------------------------------------------------------------------------
-// [SECTION] Helpers: Debug log, Memory allocations macros, ImVector<>
+// [SECTION] Helpers: Debug log, memory allocations macros, ImVector<>
 //-----------------------------------------------------------------------------
-
-// ImGuiListClipper
-IGSHARP_API void* IGSharp_ListClipper_New(void);
-IGSHARP_API void  IGSharp_ListClipper_Delete(void* clipper);
-IGSHARP_API void  IGSharp_ListClipper_Begin(void* clipper, int items_count, float items_height);
-IGSHARP_API void  IGSharp_ListClipper_End(void* clipper);
-IGSHARP_API bool  IGSharp_ListClipper_Step(void* clipper);
-IGSHARP_API void  IGSharp_ListClipper_IncludeItemsByIndex(void* clipper, int item_begin, int item_end);
-IGSHARP_API void  IGSharp_ListClipper_SeekCursorForItem(void* clipper, int item_index);
-IGSHARP_API int   IGSharp_ListClipper_GetDisplayStart(void* clipper);
-IGSHARP_API int   IGSharp_ListClipper_GetDisplayEnd(void* clipper);
-IGSHARP_API int   IGSharp_ListClipper_GetUserIndex(void* clipper);
-IGSHARP_API void  IGSharp_ListClipper_SetUserIndex(void* clipper, int user_index);
-
-// ImGuiListClipperFlags
-// ImGuiListClipperFlags: flags for IGSharp_ListClipper_Begin / Flags member.
-// Mirrored from upstream; values validated per-value in imgui_sharp_layout_check.cpp.
-typedef enum {
-    IGSharp_ListClipperFlags_None                  = 0,
-    IGSharp_ListClipperFlags_NoSetTableRowCounters = 1 << 0,   // [Internal] Disabled modifying table row counters.
-} IGSharp_ListClipperFlags;
-
-// ImGuiOnceUponAFrame
-IGSHARP_API void* IGSharp_OnceUponAFrame_New(void);
-IGSHARP_API void  IGSharp_OnceUponAFrame_Delete(void* oaf);
-IGSHARP_API bool  IGSharp_OnceUponAFrame_Check(void* oaf);   // invokes operator bool(): true at most once per frame
-IGSHARP_API int   IGSharp_OnceUponAFrame_GetRefFrame(void* oaf);
-
-// ImGuiTextFilter
-// Helpers: ImGuiTextFilter (opaque handle; internals not mirrored)
-typedef struct IGSharp_TextFilter IGSharp_TextFilter;
-IGSHARP_API IGSharp_TextFilter* IGSharp_TextFilter_New(const char* default_filter);
-IGSHARP_API void                IGSharp_TextFilter_Delete(IGSharp_TextFilter* filter);
-IGSHARP_API bool                IGSharp_TextFilter_Draw(IGSharp_TextFilter* filter, const char* label, float width);
-IGSHARP_API bool                IGSharp_TextFilter_PassFilter(IGSharp_TextFilter* filter, const char* text, const char* text_end);
-IGSHARP_API void                IGSharp_TextFilter_Build(IGSharp_TextFilter* filter);
-IGSHARP_API void                IGSharp_TextFilter_Clear(IGSharp_TextFilter* filter);
-IGSHARP_API bool                IGSharp_TextFilter_IsActive(IGSharp_TextFilter* filter);
-
-// ImGuiTextBuffer
-// ImGuiTextBuffer (~string builder over ImVector<char>). Opaque handle.
-// appendf/appendfv are variadic and dropped; C# formats at the call site and uses Append.
-IGSHARP_API void*       IGSharp_TextBuffer_New(void);
-IGSHARP_API void        IGSharp_TextBuffer_Delete(void* buf);
-IGSHARP_API const char* IGSharp_TextBuffer_CStr(void* buf);
-IGSHARP_API int         IGSharp_TextBuffer_Size(void* buf);
-IGSHARP_API bool        IGSharp_TextBuffer_Empty(void* buf);
-IGSHARP_API void        IGSharp_TextBuffer_Clear(void* buf);
-IGSHARP_API void        IGSharp_TextBuffer_Resize(void* buf, int size);
-IGSHARP_API void        IGSharp_TextBuffer_Reserve(void* buf, int capacity);
-IGSHARP_API void        IGSharp_TextBuffer_Append(void* buf, const char* str, const char* str_end);
-
-// ImGuiStorage
-// ImGuiStorage (opaque handle; sorted key->value container, ref-returning methods)
-IGSHARP_API void*  IGSharp_Storage_New(void);
-IGSHARP_API void   IGSharp_Storage_Delete(void* storage);
-IGSHARP_API void   IGSharp_Storage_Clear(void* storage);
-IGSHARP_API int    IGSharp_Storage_GetInt(void* storage, unsigned int key, int default_val);
-IGSHARP_API void   IGSharp_Storage_SetInt(void* storage, unsigned int key, int val);
-IGSHARP_API bool   IGSharp_Storage_GetBool(void* storage, unsigned int key, bool default_val);
-IGSHARP_API void   IGSharp_Storage_SetBool(void* storage, unsigned int key, bool val);
-IGSHARP_API float  IGSharp_Storage_GetFloat(void* storage, unsigned int key, float default_val);
-IGSHARP_API void   IGSharp_Storage_SetFloat(void* storage, unsigned int key, float val);
-IGSHARP_API void*  IGSharp_Storage_GetVoidPtr(void* storage, unsigned int key);
-IGSHARP_API void   IGSharp_Storage_SetVoidPtr(void* storage, unsigned int key, void* val);
-IGSHARP_API int*   IGSharp_Storage_GetIntRef(void* storage, unsigned int key, int default_val);
-IGSHARP_API bool*  IGSharp_Storage_GetBoolRef(void* storage, unsigned int key, bool default_val);
-IGSHARP_API float* IGSharp_Storage_GetFloatRef(void* storage, unsigned int key, float default_val);
-IGSHARP_API void** IGSharp_Storage_GetVoidPtrRef(void* storage, unsigned int key, void* default_val);
-IGSHARP_API void   IGSharp_Storage_BuildSortByKey(void* storage);
-IGSHARP_API void   IGSharp_Storage_SetAllInt(void* storage, int val);
-
+// (no C wrappers: IMGUI_DEBUG_LOG/IM_ALLOC macros and ImVector<> are C++-side utilities.
+//  ImVector<T> members are expanded inline as _Size/_Capacity/_Data field triplets in
+//  mirror structs, or exposed via accessor functions.)
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiStyle
 //-----------------------------------------------------------------------------
 // Layout-compatible C mirror of Dear ImGui's ImGuiStyle. Verified at compile
 // time in src/imgui_sharp_layout_check.cpp.
-//
 // Obtain a pointer with IGSharp_GetStyle() and read/write fields directly.
 // The single member function (ScaleAllSizes) is exported as a free function
 // IGSharp_Style_ScaleAllSizes taking IGSharp_Style* as the first argument.
@@ -1615,19 +1551,25 @@ typedef struct IGSharp_Style {
 } IGSharp_Style;
 
 IGSHARP_API void IGSharp_Style_ScaleAllSizes(IGSharp_Style* style, float scale);
-
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiIO
 //-----------------------------------------------------------------------------
 // Layout-compatible C mirror of Dear ImGui's ImGuiIO. Field order, types and
 // padding must match upstream exactly; verified at compile time in
 // src/imgui_sharp_layout_check.cpp via sizeof + offsetof on every field.
-//
 // Obtain a pointer with IGSharp_GetIO() and read/write fields directly. The
 // few member functions that ImGuiIO exposes (event queue, ClearInputKeys,
 // etc.) are exported as IGSharp_IO_* free functions taking IGSharp_IO* as the
 // first argument.
 //-----------------------------------------------------------------------------
+
+// IGSharp_KeyData: mirror of upstream ImGuiKeyData (key/analog state, stored in IGSharp_IO.KeysData[]).
+typedef struct {
+    bool  Down;
+    float DownDuration;
+    float DownDurationPrev;
+    float AnalogValue;
+} IGSharp_KeyData;
 
 typedef struct IGSharp_IO {
     // Configuration
@@ -1763,19 +1705,18 @@ IGSHARP_API void IGSharp_IO_AddFocusEvent(IGSharp_IO* io, bool focused);
 IGSHARP_API void IGSharp_IO_AddInputCharacter(IGSharp_IO* io, unsigned int c);
 IGSHARP_API void IGSharp_IO_AddInputCharacterUTF16(IGSharp_IO* io, unsigned short c);
 IGSHARP_API void IGSharp_IO_AddInputCharactersUTF8(IGSharp_IO* io, const char* str);
+IGSHARP_API void IGSharp_IO_SetKeyEventNativeData(IGSharp_IO* io, int key, int native_keycode, int native_scancode, int native_legacy_index);
 IGSHARP_API void IGSharp_IO_SetAppAcceptingEvents(IGSharp_IO* io, bool accepting);
 IGSHARP_API void IGSharp_IO_ClearEventsQueue(IGSharp_IO* io);
 IGSHARP_API void IGSharp_IO_ClearInputKeys(IGSharp_IO* io);
 IGSHARP_API void IGSharp_IO_ClearInputMouse(IGSharp_IO* io);
-
-// ImGuiIO::SetKeyEventNativeData
-IGSHARP_API void IGSharp_IO_SetKeyEventNativeData(IGSharp_IO* io, int key, int native_keycode, int native_scancode, int native_legacy_index);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Misc data structures (ImGuiInputTextCallbackData, ImGuiSizeCallbackData, ImGuiPayload)
 //-----------------------------------------------------------------------------
 
 // ImGuiInputTextCallbackData: Field Accessors
+IGSHARP_API void*          IGSharp_InputTextCallbackData_GetCtx(void* data);    // ImGuiContext* (-> IGSharp_Context*; for IGSharp_SetCurrentContext in multi-context apps)
 IGSHARP_API int            IGSharp_InputTextCallbackData_GetEventFlag(void* data);
 IGSHARP_API int            IGSharp_InputTextCallbackData_GetFlags(void* data);
 IGSHARP_API void*          IGSharp_InputTextCallbackData_GetUserData(void* data);
@@ -1810,14 +1751,6 @@ IGSHARP_API void IGSharp_InputTextCallbackData_SetBuf(void* data, char* buf);
 IGSHARP_API void IGSharp_InputTextCallbackData_SetBufSize(void* data, int size);
 IGSHARP_API void IGSharp_InputTextCallbackData_ResizeBuf(void* data, char* new_buf, int new_buf_size);
 
-// ImGuiPayload accessors
-IGSHARP_API void*       IGSharp_Payload_GetData(void* payload);
-IGSHARP_API int         IGSharp_Payload_GetDataSize(void* payload);
-IGSHARP_API const char* IGSharp_Payload_GetDataType(void* payload);
-IGSHARP_API bool        IGSharp_Payload_IsDataType(void* payload, const char* type);
-IGSHARP_API bool        IGSharp_Payload_IsPreview(void* payload);
-IGSHARP_API bool        IGSharp_Payload_IsDelivery(void* payload);
-
 // ImGuiSizeCallbackData accessors
 // --- ImGuiSizeCallbackData: Field Accessors ---
 // Delivered as a pointer to the SetNextWindowSizeConstraints() callback (accessed via opaque void*).
@@ -1827,26 +1760,92 @@ IGSHARP_API IGSharp_Vec2 IGSharp_SizeCallbackData_GetCurrentSize(void* data);  /
 IGSHARP_API IGSharp_Vec2 IGSharp_SizeCallbackData_GetDesiredSize(void* data);  // Read-write.
 IGSHARP_API void         IGSharp_SizeCallbackData_SetDesiredSize(void* data, IGSharp_Vec2 v);
 
+// ImGuiPayload accessors
+IGSHARP_API void*       IGSharp_Payload_GetData(void* payload);
+IGSHARP_API int         IGSharp_Payload_GetDataSize(void* payload);
+IGSHARP_API const char* IGSharp_Payload_GetDataType(void* payload);
+IGSHARP_API bool        IGSharp_Payload_IsDataType(void* payload, const char* type);
+IGSHARP_API bool        IGSharp_Payload_IsPreview(void* payload);
+IGSHARP_API bool        IGSharp_Payload_IsDelivery(void* payload);
+
 //-----------------------------------------------------------------------------
-// [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiMultiSelectIO, ImGuiSelectionRequest, ImGuiSelectionBasicStorage, ImGuiSelectionExternalStorage)
+// [SECTION] Helpers (ImGuiOnceUponAFrame, ImGuiTextFilter, ImGuiTextBuffer, ImGuiStorage, ImGuiListClipper, Math Operators, ImColor)
 //-----------------------------------------------------------------------------
 
-// ImGuiMultiSelectIO accessors
-IGSHARP_API int       IGSharp_MultiSelectIO_GetRequestsCount(void* io);
-IGSHARP_API void*     IGSharp_MultiSelectIO_GetRequest(void* io, int index);
-IGSHARP_API long long IGSharp_MultiSelectIO_GetRangeSrcItem(void* io);
-IGSHARP_API long long IGSharp_MultiSelectIO_GetNavIdItem(void* io);
-IGSHARP_API bool      IGSharp_MultiSelectIO_GetNavIdSelected(void* io);
-IGSHARP_API bool      IGSharp_MultiSelectIO_GetRangeSrcReset(void* io);
-IGSHARP_API void      IGSharp_MultiSelectIO_SetRangeSrcReset(void* io, bool v);
-IGSHARP_API int       IGSharp_MultiSelectIO_GetItemsCount(void* io);
+// ImGuiOnceUponAFrame
+IGSHARP_API void* IGSharp_OnceUponAFrame_New(void);
+IGSHARP_API void  IGSharp_OnceUponAFrame_Delete(void* oaf);
+IGSHARP_API bool  IGSharp_OnceUponAFrame_Check(void* oaf);   // invokes operator bool(): true at most once per frame
+IGSHARP_API int   IGSharp_OnceUponAFrame_GetRefFrame(void* oaf);
 
-// ImGuiSelectionRequest accessors
-IGSHARP_API int       IGSharp_SelectionRequest_GetType(void* request);
-IGSHARP_API bool      IGSharp_SelectionRequest_GetSelected(void* request);
-IGSHARP_API int       IGSharp_SelectionRequest_GetRangeDirection(void* request);
-IGSHARP_API long long IGSharp_SelectionRequest_GetRangeFirstItem(void* request);
-IGSHARP_API long long IGSharp_SelectionRequest_GetRangeLastItem(void* request);
+// ImGuiTextFilter
+// Helpers: ImGuiTextFilter (opaque handle; internals not mirrored)
+typedef struct IGSharp_TextFilter IGSharp_TextFilter;
+IGSHARP_API IGSharp_TextFilter* IGSharp_TextFilter_New(const char* default_filter);
+IGSHARP_API void                IGSharp_TextFilter_Delete(IGSharp_TextFilter* filter);
+IGSHARP_API bool                IGSharp_TextFilter_Draw(IGSharp_TextFilter* filter, const char* label, float width);
+IGSHARP_API bool                IGSharp_TextFilter_PassFilter(IGSharp_TextFilter* filter, const char* text, const char* text_end);
+IGSHARP_API void                IGSharp_TextFilter_Build(IGSharp_TextFilter* filter);
+IGSHARP_API void                IGSharp_TextFilter_Clear(IGSharp_TextFilter* filter);
+IGSHARP_API bool                IGSharp_TextFilter_IsActive(IGSharp_TextFilter* filter);
+
+// ImGuiTextBuffer (~string builder over ImVector<char>). Opaque handle.
+// appendf/appendfv are variadic and dropped; C# formats at the call site and uses Append.
+IGSHARP_API void*       IGSharp_TextBuffer_New(void);
+IGSHARP_API void        IGSharp_TextBuffer_Delete(void* buf);
+IGSHARP_API const char* IGSharp_TextBuffer_CStr(void* buf);
+IGSHARP_API int         IGSharp_TextBuffer_Size(void* buf);
+IGSHARP_API bool        IGSharp_TextBuffer_Empty(void* buf);
+IGSHARP_API void        IGSharp_TextBuffer_Clear(void* buf);
+IGSHARP_API void        IGSharp_TextBuffer_Resize(void* buf, int size);
+IGSHARP_API void        IGSharp_TextBuffer_Reserve(void* buf, int capacity);
+IGSHARP_API void        IGSharp_TextBuffer_Append(void* buf, const char* str, const char* str_end);
+
+// ImGuiStorage (opaque handle; sorted key->value container, ref-returning methods)
+IGSHARP_API void*  IGSharp_Storage_New(void);
+IGSHARP_API void   IGSharp_Storage_Delete(void* storage);
+IGSHARP_API void   IGSharp_Storage_Clear(void* storage);
+IGSHARP_API int    IGSharp_Storage_GetInt(void* storage, unsigned int key, int default_val);
+IGSHARP_API void   IGSharp_Storage_SetInt(void* storage, unsigned int key, int val);
+IGSHARP_API bool   IGSharp_Storage_GetBool(void* storage, unsigned int key, bool default_val);
+IGSHARP_API void   IGSharp_Storage_SetBool(void* storage, unsigned int key, bool val);
+IGSHARP_API float  IGSharp_Storage_GetFloat(void* storage, unsigned int key, float default_val);
+IGSHARP_API void   IGSharp_Storage_SetFloat(void* storage, unsigned int key, float val);
+IGSHARP_API void*  IGSharp_Storage_GetVoidPtr(void* storage, unsigned int key);
+IGSHARP_API void   IGSharp_Storage_SetVoidPtr(void* storage, unsigned int key, void* val);
+IGSHARP_API int*   IGSharp_Storage_GetIntRef(void* storage, unsigned int key, int default_val);
+IGSHARP_API bool*  IGSharp_Storage_GetBoolRef(void* storage, unsigned int key, bool default_val);
+IGSHARP_API float* IGSharp_Storage_GetFloatRef(void* storage, unsigned int key, float default_val);
+IGSHARP_API void** IGSharp_Storage_GetVoidPtrRef(void* storage, unsigned int key, void* default_val);
+IGSHARP_API void   IGSharp_Storage_BuildSortByKey(void* storage);
+IGSHARP_API void   IGSharp_Storage_SetAllInt(void* storage, int val);
+
+// ImGuiListClipperFlags: flags for IGSharp_ListClipper_Begin / Flags member.
+// Mirrored from upstream; values validated per-value in imgui_sharp_layout_check.cpp.
+typedef enum {
+    IGSharp_ListClipperFlags_None                  = 0,
+    IGSharp_ListClipperFlags_NoSetTableRowCounters = 1 << 0,   // [Internal] Disabled modifying table row counters.
+} IGSharp_ListClipperFlags;
+
+// ImGuiListClipper
+IGSHARP_API void* IGSharp_ListClipper_New(void);
+IGSHARP_API void  IGSharp_ListClipper_Delete(void* clipper);
+IGSHARP_API void  IGSharp_ListClipper_Begin(void* clipper, int items_count, float items_height);
+IGSHARP_API void  IGSharp_ListClipper_End(void* clipper);
+IGSHARP_API bool  IGSharp_ListClipper_Step(void* clipper);
+IGSHARP_API void  IGSharp_ListClipper_IncludeItemsByIndex(void* clipper, int item_begin, int item_end);
+IGSHARP_API void  IGSharp_ListClipper_SeekCursorForItem(void* clipper, int item_index);
+IGSHARP_API int   IGSharp_ListClipper_GetDisplayStart(void* clipper);
+IGSHARP_API int   IGSharp_ListClipper_GetDisplayEnd(void* clipper);
+IGSHARP_API int   IGSharp_ListClipper_GetUserIndex(void* clipper);
+IGSHARP_API void  IGSharp_ListClipper_SetUserIndex(void* clipper, int user_index);
+
+// (Math operators and ImColor are C++ conveniences; no C wrappers needed —
+//  pack colors with IGSharp_ColorConvertFloat4ToU32().)
+
+//-----------------------------------------------------------------------------
+// [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiSelectionRequestType, ImGuiSelectionRequest, ImGuiMultiSelectIO, ImGuiSelectionBasicStorage)
+//-----------------------------------------------------------------------------
 
 // ImGuiMultiSelectFlags
 // Flags for BeginMultiSelect() -> mirror of enum ImGuiMultiSelectFlags_ (passed as int)
@@ -1873,7 +1872,16 @@ typedef enum {
     IGSharp_MultiSelectFlags_SelectOnMask_         = IGSharp_MultiSelectFlags_SelectOnAuto | IGSharp_MultiSelectFlags_SelectOnClickAlways | IGSharp_MultiSelectFlags_SelectOnClickRelease,
 } IGSharp_MultiSelectFlags;
 
-// ImGuiSelectionRequestType
+// ImGuiMultiSelectIO accessors
+IGSHARP_API int       IGSharp_MultiSelectIO_GetRequestsCount(void* io);
+IGSHARP_API void*     IGSharp_MultiSelectIO_GetRequest(void* io, int index);
+IGSHARP_API long long IGSharp_MultiSelectIO_GetRangeSrcItem(void* io);
+IGSHARP_API long long IGSharp_MultiSelectIO_GetNavIdItem(void* io);
+IGSHARP_API bool      IGSharp_MultiSelectIO_GetNavIdSelected(void* io);
+IGSHARP_API bool      IGSharp_MultiSelectIO_GetRangeSrcReset(void* io);
+IGSHARP_API void      IGSharp_MultiSelectIO_SetRangeSrcReset(void* io, bool v);
+IGSHARP_API int       IGSharp_MultiSelectIO_GetItemsCount(void* io);
+
 // ImGuiSelectionRequestType: mirror of ImGuiSelectionRequestType (returned by IGSharp_SelectionRequest_GetType)
 typedef enum {
     IGSharp_SelectionRequestType_None = 0,
@@ -1881,7 +1889,13 @@ typedef enum {
     IGSharp_SelectionRequestType_SetRange,      // Request app to select/unselect [RangeFirstItem..RangeLastItem] items (inclusive) based on value of Selected.
 } IGSharp_SelectionRequestType;
 
-// ImGuiSelectionBasicStorage
+// ImGuiSelectionRequest accessors
+IGSHARP_API int       IGSharp_SelectionRequest_GetType(void* request);
+IGSHARP_API bool      IGSharp_SelectionRequest_GetSelected(void* request);
+IGSHARP_API int       IGSharp_SelectionRequest_GetRangeDirection(void* request);
+IGSHARP_API long long IGSharp_SelectionRequest_GetRangeFirstItem(void* request);
+IGSHARP_API long long IGSharp_SelectionRequest_GetRangeLastItem(void* request);
+
 // ImGuiSelectionBasicStorage (opaque handle + accessors)
 // NOTE: not mirrored (interleaves ctor/methods, a function-pointer adapter, and internal
 // ImGuiStorage). Swap() and the AdapterIndexToStorageId setter are intentionally omitted
@@ -1900,7 +1914,6 @@ IGSHARP_API void         IGSharp_SelectionBasicStorage_SetPreserveOrder(void* st
 IGSHARP_API void*        IGSharp_SelectionBasicStorage_GetUserData(void* storage);
 IGSHARP_API void         IGSharp_SelectionBasicStorage_SetUserData(void* storage, void* v);
 
-// ImGuiSelectionExternalStorage
 // ImGuiSelectionExternalStorage (opaque; helper to apply selection requests to your own storage)
 // Adapter callback: self is an opaque IGSharp_SelectionExternalStorage*; read UserData via IGSharp_SelectionExternalStorage_GetUserData(self).
 typedef void (*IGSharp_SelectionExternalStorageAdapter)(void* self, int idx, bool selected);
@@ -1912,52 +1925,48 @@ IGSHARP_API void  IGSharp_SelectionExternalStorage_SetAdapterSetItemSelected(voi
 IGSHARP_API void  IGSharp_SelectionExternalStorage_ApplyRequests(void* storage, void* ms_io); // ms_io = ImGuiMultiSelectIO*
 
 //-----------------------------------------------------------------------------
-// [SECTION] Drawing API (ImDrawCallback, ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter, ImDrawFlags, ImDrawListFlags, ImDrawList, ImDrawData)
+// [SECTION] Drawing API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter, ImDrawListFlags, ImDrawList, ImDrawData)
 //-----------------------------------------------------------------------------
 
-// ImDrawList: Clipping
-IGSHARP_API void IGSharp_DrawList_PushClipRect(void* draw_list, IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current);
-IGSHARP_API void IGSharp_DrawList_PushClipRectFullScreen(void* draw_list);
-IGSHARP_API void IGSharp_DrawList_PopClipRect(void* draw_list);
+// ImDrawCallback: a draw command can carry a user callback instead of geometry.
+// parent_list is an ImDrawList*, cmd is an ImDrawCmd* (use IGSharp_DrawCmd_* accessors).
+typedef void (*IGSharp_DrawCallback)(void* parent_list, void* cmd);
+// Sentinel UserCallback value asking the backend to reset its render state. Compare
+// IGSharp_DrawCmd_GetUserCallback against this before dereferencing it as a function.
+// Mirrors upstream ImDrawCallback_ResetRenderState (== (ImDrawCallback)-8).
+#define IGSHARP_DRAWCALLBACK_RESETRENDERSTATE ((void*)(intptr_t)(-8))
 
-// ImDrawList: Primitives
-IGSHARP_API void IGSharp_DrawList_AddLine(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, unsigned int col, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddRect(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddRectFilled(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags);
-IGSHARP_API void IGSharp_DrawList_AddRectFilledMultiColor(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col_ul, unsigned int col_ur, unsigned int col_br, unsigned int col_bl);
-IGSHARP_API void IGSharp_DrawList_AddQuad(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddQuadFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_AddTriangle(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddTriangleFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_AddCircle(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddCircleFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
-IGSHARP_API void IGSharp_DrawList_AddNgon(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddNgonFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
-IGSHARP_API void IGSharp_DrawList_AddEllipse(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddEllipseFilled(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments);
-IGSHARP_API void IGSharp_DrawList_AddText(void* draw_list, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end);
-IGSHARP_API void IGSharp_DrawList_AddBezierCubic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness, int num_segments);
-IGSHARP_API void IGSharp_DrawList_AddBezierQuadratic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness, int num_segments);
-IGSHARP_API void IGSharp_DrawList_AddPolyline(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col, int flags, float thickness);
-IGSHARP_API void IGSharp_DrawList_AddConvexPolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_AddConcavePolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
+// ImDrawIdx is the index type used by ImDrawList index buffers. The wrapper bakes in
+// the default 16-bit width (unsigned short); pinned by a static_assert in imgui_sharp_layout_check.cpp.
 
-// ImDrawList: Images
-IGSHARP_API void IGSharp_DrawList_AddImage(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_AddImageQuad(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, IGSharp_Vec2 uv1, IGSharp_Vec2 uv2, IGSharp_Vec2 uv3, IGSharp_Vec2 uv4, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_AddImageRounded(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col, float rounding, int flags);
+// ImDrawCmd: accessors (not mirrored: contains ImTextureRef and requires the GetTexID() getter)
+IGSHARP_API IGSharp_Vec4 IGSharp_DrawCmd_GetClipRect(void* draw_cmd);
+IGSHARP_API unsigned long long IGSharp_DrawCmd_GetTexID(void* draw_cmd);
+IGSHARP_API unsigned int IGSharp_DrawCmd_GetVtxOffset(void* draw_cmd);
+IGSHARP_API unsigned int IGSharp_DrawCmd_GetIdxOffset(void* draw_cmd);
+IGSHARP_API unsigned int IGSharp_DrawCmd_GetElemCount(void* draw_cmd);
+IGSHARP_API void* IGSharp_DrawCmd_GetUserCallback(void* draw_cmd);
+IGSHARP_API void* IGSharp_DrawCmd_GetUserCallbackData(void* draw_cmd);
+IGSHARP_API int IGSharp_DrawCmd_GetUserCallbackDataSize(void* draw_cmd);
 
-// ImDrawList: Path API
-IGSHARP_API void IGSharp_DrawList_PathClear(void* draw_list);
-IGSHARP_API void IGSharp_DrawList_PathLineTo(void* draw_list, IGSharp_Vec2 pos);
-IGSHARP_API void IGSharp_DrawList_PathLineToMergeDuplicate(void* draw_list, IGSharp_Vec2 pos);
-IGSHARP_API void IGSharp_DrawList_PathFillConvex(void* draw_list, unsigned int col);
-IGSHARP_API void IGSharp_DrawList_PathStroke(void* draw_list, unsigned int col, int flags, float thickness);
-IGSHARP_API void IGSharp_DrawList_PathArcTo(void* draw_list, IGSharp_Vec2 center, float radius, float a_min, float a_max, int num_segments);
-IGSHARP_API void IGSharp_DrawList_PathArcToFast(void* draw_list, IGSharp_Vec2 center, float radius, int a_min_of_12, int a_max_of_12);
-IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, int num_segments);
-IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
-IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
+// ImDrawVert: layout-compatible mirror of the default ImDrawVert (20 bytes).
+// Only valid when IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT is NOT defined (the default).
+// Lets .NET read ImDrawList vertex buffers (VtxBuffer) for custom rendering.
+typedef struct IGSharp_DrawVert {
+    IGSharp_Vec2 pos;
+    IGSharp_Vec2 uv;
+    unsigned int col; // ImU32
+} IGSharp_DrawVert;
+
+// ImDrawListSplitter (accessors)
+// ImDrawListSplitter (helper to split a draw list into layers; opaque handle)
+IGSHARP_API void* IGSharp_DrawListSplitter_Create(void);
+IGSHARP_API void  IGSharp_DrawListSplitter_Destroy(void* splitter);
+IGSHARP_API void  IGSharp_DrawListSplitter_Clear(void* splitter);
+IGSHARP_API void  IGSharp_DrawListSplitter_ClearFreeMemory(void* splitter);
+IGSHARP_API void  IGSharp_DrawListSplitter_Split(void* splitter, void* draw_list, int count);
+IGSHARP_API void  IGSharp_DrawListSplitter_Merge(void* splitter, void* draw_list);
+IGSHARP_API void  IGSharp_DrawListSplitter_SetCurrentChannel(void* splitter, void* draw_list, int channel_idx);
 
 // ImDrawFlags_
 // Flags for ImDrawList functions (AddRect, AddRectFilled, PathStroke, PathRect, ...).
@@ -1991,80 +2000,81 @@ typedef enum {
     IGSharp_DrawListFlags_AllowVtxOffset         = 1 << 3,  // Can emit 'VtxOffset > 0' to allow large meshes
 } IGSharp_DrawListFlags;
 
-// ImDrawVert
-// ImDrawVert: layout-compatible mirror of the default ImDrawVert (20 bytes).
-// Only valid when IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT is NOT defined (the default).
-// Lets .NET read ImDrawList vertex buffers (VtxBuffer) for custom rendering.
-typedef struct IGSharp_DrawVert {
-    IGSharp_Vec2 pos;
-    IGSharp_Vec2 uv;
-    unsigned int col; // ImU32
-} IGSharp_DrawVert;
+// ImDrawList: Clipping
+IGSHARP_API void IGSharp_DrawList_PushClipRect(void* draw_list, IGSharp_Vec2 clip_rect_min, IGSharp_Vec2 clip_rect_max, bool intersect_with_current);
+IGSHARP_API void IGSharp_DrawList_PushClipRectFullScreen(void* draw_list);
+IGSHARP_API void IGSharp_DrawList_PopClipRect(void* draw_list);
 
-// ImDrawData
-// ImDrawData (accessors; obtain via IGSharp_GetDrawData())
-IGSHARP_API bool         IGSharp_DrawData_GetValid(void* draw_data);
-IGSHARP_API int          IGSharp_DrawData_GetCmdListsCount(void* draw_data);
-IGSHARP_API int          IGSharp_DrawData_GetTotalIdxCount(void* draw_data);
-IGSHARP_API int          IGSharp_DrawData_GetTotalVtxCount(void* draw_data);
-IGSHARP_API void*        IGSharp_DrawData_GetCmdList(void* draw_data, int index); // -> ImDrawList*
-IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetDisplayPos(void* draw_data);
-IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetDisplaySize(void* draw_data);
-IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetFramebufferScale(void* draw_data);
-IGSHARP_API void*        IGSharp_DrawData_GetOwnerViewport(void* draw_data); // -> ImGuiViewport*
-IGSHARP_API void         IGSharp_DrawData_Clear(void* draw_data);
-IGSHARP_API void         IGSharp_DrawData_AddDrawList(void* draw_data, void* draw_list);
-IGSHARP_API void         IGSharp_DrawData_DeIndexAllBuffers(void* draw_data);
-IGSHARP_API void         IGSharp_DrawData_ScaleClipRects(void* draw_data, IGSharp_Vec2 fb_scale);
-
-// ImDrawCmd
-// ImDrawCmd: accessors (not mirrored: contains ImTextureRef and requires the GetTexID() getter)
-IGSHARP_API IGSharp_Vec4 IGSharp_DrawCmd_GetClipRect(void* draw_cmd);
-IGSHARP_API unsigned long long IGSharp_DrawCmd_GetTexID(void* draw_cmd);
-IGSHARP_API unsigned int IGSharp_DrawCmd_GetVtxOffset(void* draw_cmd);
-IGSHARP_API unsigned int IGSharp_DrawCmd_GetIdxOffset(void* draw_cmd);
-IGSHARP_API unsigned int IGSharp_DrawCmd_GetElemCount(void* draw_cmd);
-IGSHARP_API void* IGSharp_DrawCmd_GetUserCallback(void* draw_cmd);
-IGSHARP_API void* IGSharp_DrawCmd_GetUserCallbackData(void* draw_cmd);
-IGSHARP_API int IGSharp_DrawCmd_GetUserCallbackDataSize(void* draw_cmd);
-
-// ImDrawListSplitter (accessors)
-// ImDrawListSplitter (helper to split a draw list into layers; opaque handle)
-IGSHARP_API void* IGSharp_DrawListSplitter_Create(void);
-IGSHARP_API void  IGSharp_DrawListSplitter_Destroy(void* splitter);
-IGSHARP_API void  IGSharp_DrawListSplitter_Clear(void* splitter);
-IGSHARP_API void  IGSharp_DrawListSplitter_ClearFreeMemory(void* splitter);
-IGSHARP_API void  IGSharp_DrawListSplitter_Split(void* splitter, void* draw_list, int count);
-IGSHARP_API void  IGSharp_DrawListSplitter_Merge(void* splitter, void* draw_list);
-IGSHARP_API void  IGSharp_DrawListSplitter_SetCurrentChannel(void* splitter, void* draw_list, int channel_idx);
-
-// ImDrawList remaining member functions
 // ImDrawList: Texture state
 IGSHARP_API void IGSharp_DrawList_PushTexture(void* draw_list, unsigned long long tex_id);
+IGSHARP_API void IGSharp_DrawList_PushTextureData(void* draw_list, void* tex_data); // ImTextureData* (preserves deferred resolution; NULL == no texture)
 IGSHARP_API void IGSharp_DrawList_PopTexture(void* draw_list);
 
 // ImDrawList: Clip rect query
 IGSHARP_API IGSharp_Vec2 IGSharp_DrawList_GetClipRectMin(void* draw_list);
 IGSHARP_API IGSharp_Vec2 IGSharp_DrawList_GetClipRectMax(void* draw_list);
 
+// ImDrawList: Primitives
+IGSHARP_API void IGSharp_DrawList_AddLine(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddRect(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddRectFilled(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col, float rounding, int flags);
+IGSHARP_API void IGSharp_DrawList_AddRectFilledMultiColor(void* draw_list, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, unsigned int col_ul, unsigned int col_ur, unsigned int col_br, unsigned int col_bl);
+IGSHARP_API void IGSharp_DrawList_AddQuad(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddQuadFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddTriangle(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddTriangleFilled(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddCircle(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddCircleFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddNgon(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddNgonFilled(void* draw_list, IGSharp_Vec2 center, float radius, unsigned int col, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddEllipse(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddEllipseFilled(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, unsigned int col, float rot, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddText(void* draw_list, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end);
+IGSHARP_API void IGSharp_DrawList_AddBezierCubic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, unsigned int col, float thickness, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddBezierQuadratic(void* draw_list, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, unsigned int col, float thickness, int num_segments);
+IGSHARP_API void IGSharp_DrawList_AddPolyline(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_AddConvexPolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddConcavePolyFilled(void* draw_list, const IGSharp_Vec2* points, int num_points, unsigned int col);
 // ImDrawList: Text with explicit font
 IGSHARP_API void IGSharp_DrawList_AddTextFont(void* draw_list, void* font, float font_size, IGSharp_Vec2 pos, unsigned int col, const char* text_begin, const char* text_end, float wrap_width, const IGSharp_Vec4* cpu_fine_clip_rect);
 
-// ImDrawList: Path API (additions)
+// ImDrawList: Images
+IGSHARP_API void IGSharp_DrawList_AddImage(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageQuad(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, IGSharp_Vec2 uv1, IGSharp_Vec2 uv2, IGSharp_Vec2 uv3, IGSharp_Vec2 uv4, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageRounded(void* draw_list, unsigned long long tex_id, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col, float rounding, int flags);
+// ImTextureData* variants (preserve deferred ImTextureID resolution for atlas/backend textures; tex_data may be NULL).
+IGSHARP_API void IGSharp_DrawList_AddImageTextureData(void* draw_list, void* tex_data, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageQuadTextureData(void* draw_list, void* tex_data, IGSharp_Vec2 p1, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, IGSharp_Vec2 uv1, IGSharp_Vec2 uv2, IGSharp_Vec2 uv3, IGSharp_Vec2 uv4, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_AddImageRoundedTextureData(void* draw_list, void* tex_data, IGSharp_Vec2 p_min, IGSharp_Vec2 p_max, IGSharp_Vec2 uv_min, IGSharp_Vec2 uv_max, unsigned int col, float rounding, int flags);
+
+// ImDrawList: Path API
+IGSHARP_API void IGSharp_DrawList_PathClear(void* draw_list);
+IGSHARP_API void IGSharp_DrawList_PathLineTo(void* draw_list, IGSharp_Vec2 pos);
+IGSHARP_API void IGSharp_DrawList_PathLineToMergeDuplicate(void* draw_list, IGSharp_Vec2 pos);
+IGSHARP_API void IGSharp_DrawList_PathFillConvex(void* draw_list, unsigned int col);
 IGSHARP_API void IGSharp_DrawList_PathFillConcave(void* draw_list, unsigned int col);
+IGSHARP_API void IGSharp_DrawList_PathStroke(void* draw_list, unsigned int col, int flags, float thickness);
+IGSHARP_API void IGSharp_DrawList_PathArcTo(void* draw_list, IGSharp_Vec2 center, float radius, float a_min, float a_max, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathArcToFast(void* draw_list, IGSharp_Vec2 center, float radius, int a_min_of_12, int a_max_of_12);
 IGSHARP_API void IGSharp_DrawList_PathEllipticalArcTo(void* draw_list, IGSharp_Vec2 center, IGSharp_Vec2 radius, float rot, float a_min, float a_max, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathBezierCubicCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, IGSharp_Vec2 p4, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathBezierQuadraticCurveTo(void* draw_list, IGSharp_Vec2 p2, IGSharp_Vec2 p3, int num_segments);
+IGSHARP_API void IGSharp_DrawList_PathRect(void* draw_list, IGSharp_Vec2 rect_min, IGSharp_Vec2 rect_max, float rounding, int flags);
 
 // ImDrawList: Advanced (callbacks, draw commands, cloning)
 IGSHARP_API void IGSharp_DrawList_AddCallback(void* draw_list, void* callback, void* userdata, size_t userdata_size);
 IGSHARP_API void IGSharp_DrawList_AddDrawCmd(void* draw_list);
-IGSHARP_API void* IGSharp_DrawList_CloneOutput(void* draw_list);
+IGSHARP_API void* IGSharp_DrawList_CloneOutput(void* draw_list);   // returns a heap ImDrawList*; free with IGSharp_DrawList_Destroy
+// Create/destroy a standalone ImDrawList (e.g. to own a CloneOutput result or build a custom list).
+// shared_data: pass IGSharp_GetDrawListSharedData(), or NULL.
+IGSHARP_API void* IGSharp_DrawList_Create(void* shared_data);      // ImDrawListSharedData*
+IGSHARP_API void  IGSharp_DrawList_Destroy(void* draw_list);
 
 // ImDrawList: Channels splitting/merging
 IGSHARP_API void IGSharp_DrawList_ChannelsSplit(void* draw_list, int count);
 IGSHARP_API void IGSharp_DrawList_ChannelsMerge(void* draw_list);
 IGSHARP_API void IGSharp_DrawList_ChannelsSetCurrent(void* draw_list, int n);
 
-// ImDrawList low-level Prim/buffer access
 // ImDrawList: Advanced - Primitives allocations (for custom mesh generation)
 IGSHARP_API void IGSharp_DrawList_PrimReserve(void* draw_list, int idx_count, int vtx_count);
 IGSHARP_API void IGSharp_DrawList_PrimUnreserve(void* draw_list, int idx_count, int vtx_count);
@@ -2079,16 +2089,32 @@ IGSHARP_API void IGSharp_DrawList_PrimVtx(void* draw_list, IGSharp_Vec2 pos, IGS
 IGSHARP_API int   IGSharp_DrawList_GetFlags(void* draw_list);                 // ImDrawListFlags
 IGSHARP_API void  IGSharp_DrawList_SetFlags(void* draw_list, int flags);      // ImDrawListFlags
 IGSHARP_API int   IGSharp_DrawList_GetCmdBufferSize(void* draw_list);
-IGSHARP_API void* IGSharp_DrawList_GetCmdBufferData(void* draw_list);         // ImDrawCmd*
+IGSHARP_API void* IGSharp_DrawList_GetCmdBufferData(void* draw_list);         // ImDrawCmd* (base; element stride is opaque — use IGSharp_DrawList_GetCmd to index)
+IGSHARP_API void* IGSharp_DrawList_GetCmd(void* draw_list, int index);        // ImDrawCmd* at index (feed to IGSharp_DrawCmd_* accessors)
 IGSHARP_API int   IGSharp_DrawList_GetIdxBufferSize(void* draw_list);
 IGSHARP_API void* IGSharp_DrawList_GetIdxBufferData(void* draw_list);         // ImDrawIdx* (unsigned short)
 IGSHARP_API int   IGSharp_DrawList_GetVtxBufferSize(void* draw_list);
 IGSHARP_API void* IGSharp_DrawList_GetVtxBufferData(void* draw_list);         // ImDrawVert*
 
-// fn-drawdata-textures
+// ImDrawData (accessors; obtain via IGSharp_GetDrawData())
+IGSHARP_API bool         IGSharp_DrawData_GetValid(void* draw_data);
+IGSHARP_API int          IGSharp_DrawData_GetCmdListsCount(void* draw_data);
+IGSHARP_API int          IGSharp_DrawData_GetTotalIdxCount(void* draw_data);
+IGSHARP_API int          IGSharp_DrawData_GetTotalVtxCount(void* draw_data);
+IGSHARP_API void*        IGSharp_DrawData_GetCmdList(void* draw_data, int index); // -> ImDrawList*
+IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetDisplayPos(void* draw_data);
+IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetDisplaySize(void* draw_data);
+IGSHARP_API IGSharp_Vec2 IGSharp_DrawData_GetFramebufferScale(void* draw_data);
+IGSHARP_API void*        IGSharp_DrawData_GetOwnerViewport(void* draw_data); // -> ImGuiViewport*
+IGSHARP_API void         IGSharp_DrawData_Clear(void* draw_data);
+IGSHARP_API void         IGSharp_DrawData_AddDrawList(void* draw_data, void* draw_list);
+IGSHARP_API void         IGSharp_DrawData_DeIndexAllBuffers(void* draw_data);
+IGSHARP_API void         IGSharp_DrawData_ScaleClipRects(void* draw_data, IGSharp_Vec2 fb_scale);
 // ImDrawData: Textures list (ImVector<ImTextureData*>* — the pointer itself may be NULL)
 IGSHARP_API int   IGSharp_DrawData_GetTexturesCount(void* draw_data);
 IGSHARP_API void* IGSharp_DrawData_GetTexturesData(void* draw_data);  // -> ImTextureData**
+IGSHARP_API void* IGSharp_DrawData_GetTextures(void* draw_data);                 // -> ImVector<ImTextureData*>* (may be NULL)
+IGSHARP_API void  IGSharp_DrawData_SetTextures(void* draw_data, void* textures); // override or set NULL to manage textures yourself
 
 //-----------------------------------------------------------------------------
 // [SECTION] Texture API (ImTextureFormat, ImTextureStatus, ImTextureRect, ImTextureData)
@@ -2112,7 +2138,6 @@ typedef enum {
     IGSharp_TextureStatus_WantDestroy,
 } IGSharp_TextureStatus;
 
-// ImTextureRect
 // ImTextureRect: coordinates of a rectangle within a texture. Pure POD mirror.
 typedef struct {
     unsigned short x;
@@ -2136,6 +2161,9 @@ IGSHARP_API int                IGSharp_TextureData_GetBytesPerPixel(void* tex_da
 IGSHARP_API unsigned char*     IGSharp_TextureData_GetPixels(void* tex_data);
 IGSHARP_API void               IGSharp_TextureData_GetUsedRect(void* tex_data, unsigned short* x, unsigned short* y, unsigned short* w, unsigned short* h);
 IGSHARP_API void               IGSharp_TextureData_GetUpdateRect(void* tex_data, unsigned short* x, unsigned short* y, unsigned short* w, unsigned short* h);
+// Individual update rectangles a backend must apply when Status == WantUpdates (the GetUpdateRect above is their bounding box).
+IGSHARP_API int                IGSharp_TextureData_GetUpdatesCount(void* tex_data);
+IGSHARP_API void               IGSharp_TextureData_GetUpdate(void* tex_data, int index, unsigned short* x, unsigned short* y, unsigned short* w, unsigned short* h);
 IGSHARP_API int                IGSharp_TextureData_GetUnusedFrames(void* tex_data);
 IGSHARP_API unsigned short     IGSharp_TextureData_GetRefCount(void* tex_data);
 IGSHARP_API bool               IGSharp_TextureData_GetUseColors(void* tex_data);
@@ -2150,35 +2178,8 @@ IGSHARP_API void               IGSharp_TextureData_SetTexID(void* tex_data, unsi
 IGSHARP_API void               IGSharp_TextureData_SetStatus(void* tex_data, int status);               // status = ImTextureStatus
 
 //-----------------------------------------------------------------------------
-// [SECTION] Font API (ImFontConfig, ImFontGlyph, ImFontGlyphRangesBuilder, ImFontAtlasFlags, ImFontAtlas, ImFontBaked, ImFont)
+// [SECTION] Font API (ImFontConfig, ImFontGlyph, ImFontAtlasFlags, ImFontAtlas, ImFontGlyphRangesBuilder, ImFont)
 //-----------------------------------------------------------------------------
-
-// ImFontAtlas
-IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas);
-IGSHARP_API void* IGSharp_FontAtlas_AddFontFromFileTTF(void* atlas, const char* filename, float size_pixels);
-IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int font_data_size, float size_pixels, bool transfer_ownership);
-IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels);
-IGSHARP_API void  IGSharp_FontAtlas_Clear(void* atlas);
-IGSHARP_API void  IGSharp_FontAtlas_ClearFonts(void* atlas);
-IGSHARP_API int   IGSharp_FontAtlas_GetFontCount(void* atlas);
-IGSHARP_API void* IGSharp_FontAtlas_GetFont(void* atlas, int index);
-
-// ImFontAtlasFlags_
-// Flags for ImFontAtlas build (passed to functions as plain int).
-typedef enum {
-    IGSharp_FontAtlasFlags_None               = 0,
-    IGSharp_FontAtlasFlags_NoPowerOfTwoHeight = 1 << 0,   // Don't round the height to next power of two
-    IGSharp_FontAtlasFlags_NoMouseCursors     = 1 << 1,   // Don't build software mouse cursors into the atlas (save a little texture memory)
-    IGSharp_FontAtlasFlags_NoBakedLines       = 1 << 2,   // Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering)
-} IGSharp_FontAtlasFlags;
-
-// ImFontFlags_
-typedef enum {
-    IGSharp_FontFlags_None           = 0,
-    IGSharp_FontFlags_NoLoadError    = 1 << 1,  // Disable throwing an error/assert when calling AddFontXXX() with missing file/data. Calling code is expected to check AddFontXXX() return value.
-    IGSharp_FontFlags_NoLoadGlyphs   = 1 << 2,  // [Internal] Disable loading new glyphs.
-    IGSharp_FontFlags_LockBakedSizes = 1 << 3,  // [Internal] Disable loading new baked sizes, disable garbage collecting current ones.
-} IGSharp_FontFlags;
 
 // ImFontConfig (accessors)
 // ImFontConfig (accessors; not mirrored — interleaves [Internal] members and has a non-trivial ctor)
@@ -2243,6 +2244,7 @@ IGSHARP_API float IGSharp_FontGlyph_GetU0(void* glyph);
 IGSHARP_API float IGSharp_FontGlyph_GetV0(void* glyph);
 IGSHARP_API float IGSharp_FontGlyph_GetU1(void* glyph);
 IGSHARP_API float IGSharp_FontGlyph_GetV1(void* glyph);
+IGSHARP_API int   IGSharp_FontGlyph_GetPackId(void* glyph);   // ImFontAtlasRectId (-1 if none); pass to IGSharp_FontAtlas_GetCustomRect to refresh UVs
 
 // ImFontGlyphRangesBuilder
 // --- ImFontGlyphRangesBuilder (opaque helper; ImWchar passed as unsigned short) ---
@@ -2259,18 +2261,6 @@ IGSHARP_API void  IGSharp_FontGlyphRangesBuilder_AddRanges(void* builder, const 
 // out_ranges_capacity); call once with out_ranges=NULL/capacity=0 to query the needed size.
 IGSHARP_API int   IGSharp_FontGlyphRangesBuilder_BuildRanges(void* builder, unsigned short* out_ranges, int out_ranges_capacity);
 
-// ImFontAtlas font construction & lifecycle
-IGSHARP_API void* IGSharp_FontAtlas_AddFont(void* atlas, const void* font_cfg); // font_cfg: const ImFontConfig*
-IGSHARP_API void* IGSharp_FontAtlas_AddFontDefaultVector(void* atlas);
-IGSHARP_API void* IGSharp_FontAtlas_AddFontDefaultBitmap(void* atlas);
-IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedBase85TTF(void* atlas, const char* compressed_data_base85, float size_pixels);
-IGSHARP_API void  IGSharp_FontAtlas_RemoveFont(void* atlas, void* font);
-IGSHARP_API void  IGSharp_FontAtlas_CompactCache(void* atlas);
-IGSHARP_API void  IGSharp_FontAtlas_SetFontLoader(void* atlas, const void* font_loader); // font_loader: const ImFontLoader*
-IGSHARP_API void  IGSharp_FontAtlas_ClearInputData(void* atlas);
-IGSHARP_API void  IGSharp_FontAtlas_ClearTexData(void* atlas);
-IGSHARP_API const unsigned short* IGSharp_FontAtlas_GetGlyphRangesDefault(void* atlas); // const ImWchar*
-
 // ImFontAtlas custom rectangles
 // ImFontAtlasRect: layout-compatible mirror of upstream ImFontAtlasRect.
 // Output of GetCustomRect()/AddCustomRect(). Do not cache (only valid for current texture).
@@ -2280,6 +2270,40 @@ typedef struct IGSharp_FontAtlasRect {
     unsigned short w, h;        // Size
     IGSharp_Vec2   uv0, uv1;    // UV coordinates (in current texture)
 } IGSharp_FontAtlasRect;
+
+// ImFontAtlasFlags_
+// Flags for ImFontAtlas build (passed to functions as plain int).
+typedef enum {
+    IGSharp_FontAtlasFlags_None               = 0,
+    IGSharp_FontAtlasFlags_NoPowerOfTwoHeight = 1 << 0,   // Don't round the height to next power of two
+    IGSharp_FontAtlasFlags_NoMouseCursors     = 1 << 1,   // Don't build software mouse cursors into the atlas (save a little texture memory)
+    IGSharp_FontAtlasFlags_NoBakedLines       = 1 << 2,   // Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering)
+} IGSharp_FontAtlasFlags;
+
+// ImFontAtlas
+// font_cfg (const ImFontConfig*, may be NULL) and glyph_ranges (const ImWchar*/unsigned short*, may be
+// NULL) mirror the upstream optional parameters: pass them to merge fonts, set oversampling, restrict
+// glyph ranges, etc. Build a config with IGSharp_FontConfig_Create()/IGSharp_FontConfig_Set*().
+IGSHARP_API void* IGSharp_FontAtlas_AddFontDefault(void* atlas, const void* font_cfg);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromFileTTF(void* atlas, const char* filename, float size_pixels, const void* font_cfg, const unsigned short* glyph_ranges);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryTTF(void* atlas, void* font_data, int font_data_size, float size_pixels, bool transfer_ownership);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedTTF(void* atlas, const void* compressed_data, int compressed_size, float size_pixels, const void* font_cfg, const unsigned short* glyph_ranges);
+IGSHARP_API void  IGSharp_FontAtlas_Clear(void* atlas);
+IGSHARP_API void  IGSharp_FontAtlas_ClearFonts(void* atlas);
+IGSHARP_API int   IGSharp_FontAtlas_GetFontCount(void* atlas);
+IGSHARP_API void* IGSharp_FontAtlas_GetFont(void* atlas, int index);
+
+// ImFontAtlas font construction & lifecycle
+IGSHARP_API void* IGSharp_FontAtlas_AddFont(void* atlas, const void* font_cfg); // font_cfg: const ImFontConfig*
+IGSHARP_API void* IGSharp_FontAtlas_AddFontDefaultVector(void* atlas, const void* font_cfg);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontDefaultBitmap(void* atlas, const void* font_cfg);
+IGSHARP_API void* IGSharp_FontAtlas_AddFontFromMemoryCompressedBase85TTF(void* atlas, const char* compressed_data_base85, float size_pixels, const void* font_cfg, const unsigned short* glyph_ranges);
+IGSHARP_API void  IGSharp_FontAtlas_RemoveFont(void* atlas, void* font);
+IGSHARP_API void  IGSharp_FontAtlas_CompactCache(void* atlas);
+IGSHARP_API void  IGSharp_FontAtlas_SetFontLoader(void* atlas, const void* font_loader); // font_loader: const ImFontLoader*
+IGSHARP_API void  IGSharp_FontAtlas_ClearInputData(void* atlas);
+IGSHARP_API void  IGSharp_FontAtlas_ClearTexData(void* atlas);
+IGSHARP_API const unsigned short* IGSharp_FontAtlas_GetGlyphRangesDefault(void* atlas); // const ImWchar*
 
 // --- Fonts: Custom rectangles (ImFontAtlasRectId is int; -1 == invalid) ---
 IGSHARP_API int  IGSharp_FontAtlas_AddCustomRect(void* atlas, int width, int height, IGSharp_FontAtlasRect* out_r);
@@ -2306,17 +2330,21 @@ IGSHARP_API void         IGSharp_FontAtlas_SetTexMaxHeight(void* atlas, int heig
 IGSHARP_API void*        IGSharp_FontAtlas_GetUserData(void* atlas);
 IGSHARP_API void         IGSharp_FontAtlas_SetUserData(void* atlas, void* user_data);
 // Output
-IGSHARP_API unsigned long long IGSharp_FontAtlas_GetTexRef(void* atlas);          // ImTextureID resolved from TexRef
-IGSHARP_API void*        IGSharp_FontAtlas_GetTexData(void* atlas);               // ImTextureData*
+// Resolved low-level ImTextureID. Lossy: returns IGSHARP_TEXTUREID_INVALID until the
+// renderer backend has uploaded the atlas texture. To bind the atlas into draw commands
+// before/across uploads, use GetTexData below with the *TextureData image variants.
+IGSHARP_API unsigned long long IGSharp_FontAtlas_GetTexID(void* atlas);
+IGSHARP_API void*        IGSharp_FontAtlas_GetTexData(void* atlas);               // ImTextureData* (preserves deferred resolution)
 IGSHARP_API bool         IGSharp_FontAtlas_GetTexPixelsUseColors(void* atlas);
+IGSHARP_API void         IGSharp_FontAtlas_SetTexPixelsUseColors(void* atlas, bool v); // set true when rendering colored output into custom rects
 IGSHARP_API IGSharp_Vec2 IGSharp_FontAtlas_GetTexUvScale(void* atlas);
 IGSHARP_API IGSharp_Vec2 IGSharp_FontAtlas_GetTexUvWhitePixel(void* atlas);
-
-// struct-accessors-FontAtlas-status
 IGSHARP_API bool         IGSharp_FontAtlas_GetTexIsBuilt(void* atlas);
 IGSHARP_API bool         IGSharp_FontAtlas_GetLocked(void* atlas);
 IGSHARP_API bool         IGSharp_FontAtlas_GetRendererHasTextures(void* atlas);
 IGSHARP_API const char*  IGSharp_FontAtlas_GetFontLoaderName(void* atlas);     // == FontLoader->Name
+IGSHARP_API unsigned int IGSharp_FontAtlas_GetFontLoaderFlags(void* atlas);            // shared font-loader flags (e.g. FreeType) for all fonts
+IGSHARP_API void         IGSharp_FontAtlas_SetFontLoaderFlags(void* atlas, unsigned int flags);
 
 // ImFontBaked accessors & methods
 // ImFontBaked (runtime per-size data; pointers valid only for the current frame).
@@ -2329,9 +2357,18 @@ IGSHARP_API float IGSharp_FontBaked_GetSize(void* baked);
 IGSHARP_API float IGSharp_FontBaked_GetAscent(void* baked);
 IGSHARP_API float IGSharp_FontBaked_GetDescent(void* baked);
 IGSHARP_API float IGSharp_FontBaked_GetFallbackAdvanceX(void* baked);
-
-// struct-accessors-FontBaked-rasterizerdensity
 IGSHARP_API float IGSharp_FontBaked_GetRasterizerDensity(void* baked);   // density this baked size is baked at
+IGSHARP_API int   IGSharp_FontBaked_GetGlyphsCount(void* baked);                  // enumerate all baked glyphs (Glyphs[])
+IGSHARP_API void* IGSharp_FontBaked_GetGlyph(void* baked, int index);             // ImFontGlyph* at index
+IGSHARP_API void  IGSharp_FontBaked_ClearOutputData(void* baked);                 // [Internal] Don't use unless you know what you're doing
+
+// ImFontFlags_
+typedef enum {
+    IGSharp_FontFlags_None           = 0,
+    IGSharp_FontFlags_NoLoadError    = 1 << 1,  // Disable throwing an error/assert when calling AddFontXXX() with missing file/data. Calling code is expected to check AddFontXXX() return value.
+    IGSharp_FontFlags_NoLoadGlyphs   = 1 << 2,  // [Internal] Disable loading new glyphs.
+    IGSharp_FontFlags_LockBakedSizes = 1 << 3,  // [Internal] Disable loading new baked sizes, disable garbage collecting current ones.
+} IGSharp_FontFlags;
 
 // ImFont accessors & methods
 // ImFont (behavioral struct: 'font' is ImFont*)
@@ -2345,24 +2382,24 @@ IGSHARP_API void         IGSharp_Font_RenderChar(void* font, void* draw_list, fl
 IGSHARP_API void         IGSharp_Font_RenderText(void* font, void* draw_list, float size, IGSharp_Vec2 pos, unsigned int col, IGSharp_Vec4 clip_rect, const char* text_begin, const char* text_end, float wrap_width, int flags); // flags: ImDrawTextFlags
 IGSHARP_API void         IGSharp_Font_AddRemapChar(void* font, unsigned short from_codepoint, unsigned short to_codepoint);
 IGSHARP_API bool         IGSharp_Font_IsGlyphRangeUnused(void* font, unsigned int c_begin, unsigned int c_last);
+IGSHARP_API void         IGSharp_Font_ClearOutputData(void* font);               // [Internal] Don't use unless you know what you're doing
 // ImFont field accessors
+IGSHARP_API void*          IGSharp_Font_GetOwnerAtlas(void* font);   // ImFontAtlas* this font was loaded into
 IGSHARP_API int            IGSharp_Font_GetFlags(void* font); // ImFontFlags
 IGSHARP_API void           IGSharp_Font_SetFlags(void* font, int flags); // ImFontFlags
 IGSHARP_API unsigned short IGSharp_Font_GetFallbackChar(void* font);
 IGSHARP_API void           IGSharp_Font_SetFallbackChar(void* font, unsigned short c);
 IGSHARP_API unsigned short IGSharp_Font_GetEllipsisChar(void* font);
 IGSHARP_API void           IGSharp_Font_SetEllipsisChar(void* font, unsigned short c);
+// When swapping EllipsisChar to a custom char, clear EllipsisAutoBake so the "..." glyph isn't re-baked over it.
+IGSHARP_API bool           IGSharp_Font_GetEllipsisAutoBake(void* font);
+IGSHARP_API void           IGSharp_Font_SetEllipsisAutoBake(void* font, bool v);
 IGSHARP_API float          IGSharp_Font_GetLegacySize(void* font);
 IGSHARP_API void           IGSharp_Font_SetLegacySize(void* font, float size);
 
 //-----------------------------------------------------------------------------
-// [SECTION] Viewports (ImGuiViewportFlags, ImGuiViewport)
+// [SECTION] Viewports
 //-----------------------------------------------------------------------------
-
-IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetPos(void* viewport);
-IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetSize(void* viewport);
-IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkPos(void* viewport);
-IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkSize(void* viewport);
 
 // ImGuiViewportFlags_
 // Flags stored in ImGuiViewport::Flags
@@ -2375,9 +2412,16 @@ typedef enum IGSharp_ViewportFlags_
 } IGSharp_ViewportFlags_;
 
 // ImGuiViewport
+// Core fields (ID/Flags/Pos/Size/FramebufferScale/WorkPos/WorkSize) are intentionally read-only:
+// Dear ImGui rewrites them every frame from io.DisplaySize etc., so a setter would have no lasting
+// effect. Only the backend-owned PlatformHandle/PlatformHandleRaw fields below have setters.
 IGSHARP_API unsigned int IGSharp_Viewport_GetID(void* viewport);
 IGSHARP_API int IGSharp_Viewport_GetFlags(void* viewport); // ImGuiViewportFlags
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetPos(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetSize(void* viewport);
 IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetFramebufferScale(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkPos(void* viewport);
+IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkSize(void* viewport);
 IGSHARP_API void* IGSharp_Viewport_GetPlatformHandle(void* viewport);
 IGSHARP_API void IGSharp_Viewport_SetPlatformHandle(void* viewport, void* handle);
 IGSHARP_API void* IGSharp_Viewport_GetPlatformHandleRaw(void* viewport);
@@ -2386,20 +2430,8 @@ IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetCenter(void* viewport);
 IGSHARP_API IGSharp_Vec2 IGSharp_Viewport_GetWorkCenter(void* viewport);
 
 //-----------------------------------------------------------------------------
-// [SECTION] ImGuiPlatformIO + other Platform Dependent Interfaces (ImGuiPlatformImeData)
+// [SECTION] Platform Dependent Interfaces
 //-----------------------------------------------------------------------------
-
-// ImGuiPlatformImeData
-// Platform IME data for the platform_io.Platform_SetImeDataFn() callback.
-// Pure POD — layout-compatible MIRROR of ImGuiPlatformImeData. The C# side
-// reads this via the ImGuiPlatformImeData* pointer passed into that callback.
-typedef struct IGSharp_PlatformImeData {
-    bool          WantVisible;       // A widget wants the IME to be visible.
-    bool          WantTextInput;     // A widget wants text input, not necessarily IME to be visible.
-    IGSharp_Vec2  InputPos;          // Position of input cursor (for IME).
-    float         InputLineHeight;   // Line height (for IME).
-    unsigned int  ViewportId;        // ImGuiID — ID of platform window/viewport.
-} IGSharp_PlatformImeData;
 
 // ImGuiPlatformIO (accessors)
 // ImGuiPlatformIO is downgraded to accessors: it interleaves raw C function pointers
@@ -2436,12 +2468,28 @@ IGSHARP_API int            IGSharp_PlatformIO_GetRendererTextureMaxHeight(IGShar
 IGSHARP_API void           IGSharp_PlatformIO_SetRendererTextureMaxHeight(IGSharp_PlatformIO* pio, int v);
 IGSHARP_API void*          IGSharp_PlatformIO_GetRendererRenderState(IGSharp_PlatformIO* pio);
 IGSHARP_API void           IGSharp_PlatformIO_SetRendererRenderState(IGSharp_PlatformIO* pio, void* render_state);
+// Textures list (ImVector<ImTextureData*>). Needed by a renderer backend to destroy textures at shutdown,
+// when no ImDrawData is available. GetTexture returns the ImTextureData* at index.
+IGSHARP_API int            IGSharp_PlatformIO_GetTexturesCount(IGSharp_PlatformIO* pio);
+IGSHARP_API void*          IGSharp_PlatformIO_GetTexture(IGSharp_PlatformIO* pio, int index);
 
 // Member functions.
 IGSHARP_API void IGSharp_PlatformIO_ClearPlatformHandlers(IGSharp_PlatformIO* pio);
 IGSHARP_API void IGSharp_PlatformIO_ClearRendererHandlers(IGSharp_PlatformIO* pio);
 
+// ImGuiPlatformImeData
+// Platform IME data for the platform_io.Platform_SetImeDataFn() callback.
+// Pure POD — layout-compatible MIRROR of ImGuiPlatformImeData. The C# side
+// reads this via the ImGuiPlatformImeData* pointer passed into that callback.
+typedef struct IGSharp_PlatformImeData {
+    bool          WantVisible;       // A widget wants the IME to be visible.
+    bool          WantTextInput;     // A widget wants text input, not necessarily IME to be visible.
+    IGSharp_Vec2  InputPos;          // Position of input cursor (for IME).
+    float         InputLineHeight;   // Line height (for IME).
+    unsigned int  ViewportId;        // ImGuiID — ID of platform window/viewport.
+} IGSharp_PlatformImeData;
+
 //-----------------------------------------------------------------------------
 // [SECTION] Obsolete functions and types
 //-----------------------------------------------------------------------------
-// (no wrappers yet)
+// (none — built with IMGUI_DISABLE_OBSOLETE_FUNCTIONS; obsolete upstream APIs are not exposed)
