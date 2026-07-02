@@ -59,6 +59,11 @@ Index of this file:
 
 IGSHARP_API void IGSharp_CheckVersion(void);
 
+// Returns true when the caller's sizes for the mirrored structs match this library's
+// layout-checked definitions. Bindings that redeclare the mirror structs (e.g. C#
+// [StructLayout] mirrors) should call this once at startup; pass 0 to skip a check.
+IGSHARP_API bool IGSharp_ValidateLayouts(size_t sizeof_io, size_t sizeof_style, size_t sizeof_key_data, size_t sizeof_platform_ime_data, size_t sizeof_draw_vert, size_t sizeof_font_atlas_rect);
+
 //-----------------------------------------------------------------------------
 // [SECTION] Forward declarations and basic types
 //-----------------------------------------------------------------------------

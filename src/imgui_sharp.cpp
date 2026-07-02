@@ -42,6 +42,16 @@ void IGSharp_CheckVersion(void)
         sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx));
 }
 
+bool IGSharp_ValidateLayouts(size_t sizeof_io, size_t sizeof_style, size_t sizeof_key_data, size_t sizeof_platform_ime_data, size_t sizeof_draw_vert, size_t sizeof_font_atlas_rect)
+{
+    return (sizeof_io == 0 || sizeof_io == sizeof(IGSharp_IO))
+        && (sizeof_style == 0 || sizeof_style == sizeof(IGSharp_Style))
+        && (sizeof_key_data == 0 || sizeof_key_data == sizeof(IGSharp_KeyData))
+        && (sizeof_platform_ime_data == 0 || sizeof_platform_ime_data == sizeof(IGSharp_PlatformImeData))
+        && (sizeof_draw_vert == 0 || sizeof_draw_vert == sizeof(IGSharp_DrawVert))
+        && (sizeof_font_atlas_rect == 0 || sizeof_font_atlas_rect == sizeof(IGSharp_FontAtlasRect));
+}
+
 //-----------------------------------------------------------------------------
 // [SECTION] Dear ImGui end-user API functions
 //-----------------------------------------------------------------------------
