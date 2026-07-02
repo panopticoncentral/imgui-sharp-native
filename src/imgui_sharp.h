@@ -125,7 +125,7 @@ IGSHARP_API void        IGSharp_ShowMetricsWindow(bool* p_open);
 IGSHARP_API void        IGSharp_ShowDebugLogWindow(bool* p_open);
 IGSHARP_API void        IGSharp_ShowIDStackToolWindow(bool* p_open);
 IGSHARP_API void        IGSharp_ShowAboutWindow(bool* p_open);
-IGSHARP_API void        IGSharp_ShowStyleEditor(void); // MISSING: ImGuiStyle
+IGSHARP_API void        IGSharp_ShowStyleEditor(IGSharp_Style* ref); // ref: reference style to compare/revert/save to (NULL = default style)
 IGSHARP_API bool        IGSharp_ShowStyleSelector(const char* label);
 IGSHARP_API void        IGSharp_ShowFontSelector(const char* label);
 IGSHARP_API void        IGSharp_ShowUserGuide(void);

@@ -70,7 +70,7 @@ void IGSharp_ShowMetricsWindow(bool* p_open)    { ImGui::ShowMetricsWindow(p_ope
 void IGSharp_ShowDebugLogWindow(bool* p_open)                   { ImGui::ShowDebugLogWindow(p_open); }
 void IGSharp_ShowIDStackToolWindow(bool* p_open)                { ImGui::ShowIDStackToolWindow(p_open); }
 void IGSharp_ShowAboutWindow(bool* p_open)                      { ImGui::ShowAboutWindow(p_open); }
-void IGSharp_ShowStyleEditor(void)                              { ImGui::ShowStyleEditor(); }
+void IGSharp_ShowStyleEditor(IGSharp_Style* ref)                { ImGui::ShowStyleEditor(reinterpret_cast<ImGuiStyle*>(ref)); }
 bool IGSharp_ShowStyleSelector(const char* label)               { return ImGui::ShowStyleSelector(label); }
 void IGSharp_ShowFontSelector(const char* label)                { ImGui::ShowFontSelector(label); }
 void IGSharp_ShowUserGuide(void)                                { ImGui::ShowUserGuide(); }
