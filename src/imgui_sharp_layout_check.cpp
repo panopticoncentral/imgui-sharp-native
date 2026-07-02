@@ -1088,6 +1088,18 @@ static_assert(offsetof(IGSharp_PlatformImeData, InputPos)        == offsetof(ImG
 static_assert(offsetof(IGSharp_PlatformImeData, InputLineHeight) == offsetof(ImGuiPlatformImeData, InputLineHeight), "IGSharp_PlatformImeData.InputLineHeight");
 static_assert(offsetof(IGSharp_PlatformImeData, ViewportId)      == offsetof(ImGuiPlatformImeData, ViewportId),      "IGSharp_PlatformImeData.ViewportId");
 
+// --- IGSHARP_COL32 macros ---------------------------------------------------
+
+static_assert(IGSHARP_COL32_R_SHIFT == IM_COL32_R_SHIFT, "IGSHARP_COL32_R_SHIFT drift from IM_COL32_R_SHIFT");
+static_assert(IGSHARP_COL32_G_SHIFT == IM_COL32_G_SHIFT, "IGSHARP_COL32_G_SHIFT drift from IM_COL32_G_SHIFT");
+static_assert(IGSHARP_COL32_B_SHIFT == IM_COL32_B_SHIFT, "IGSHARP_COL32_B_SHIFT drift from IM_COL32_B_SHIFT");
+static_assert(IGSHARP_COL32_A_SHIFT == IM_COL32_A_SHIFT, "IGSHARP_COL32_A_SHIFT drift from IM_COL32_A_SHIFT");
+static_assert(IGSHARP_COL32_A_MASK  == IM_COL32_A_MASK,  "IGSHARP_COL32_A_MASK drift from IM_COL32_A_MASK");
+static_assert(IGSHARP_COL32(1, 2, 3, 4) == IM_COL32(1, 2, 3, 4), "IGSHARP_COL32 packing drift from IM_COL32");
+static_assert(IGSHARP_COL32_WHITE       == IM_COL32_WHITE,       "IGSHARP_COL32_WHITE drift");
+static_assert(IGSHARP_COL32_BLACK       == IM_COL32_BLACK,       "IGSHARP_COL32_BLACK drift");
+static_assert(IGSHARP_COL32_BLACK_TRANS == IM_COL32_BLACK_TRANS, "IGSHARP_COL32_BLACK_TRANS drift");
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
