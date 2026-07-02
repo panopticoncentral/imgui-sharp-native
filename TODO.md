@@ -43,10 +43,10 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 
 ### Maintenance
 - [ ] Track Dear ImGui version updates (currently pinned to v1.92.7 via submodule)
-- [ ] Coordinate `SdlSharp.ImGui` update for the IGSharp_IO / IGSharp_Style
-  refactor — the C# side previously called ~134 deleted accessor functions
-  and now needs a layout-matching `[StructLayout(LayoutKind.Sequential)]`
-  mirror on the managed side. Bool fields must use `[MarshalAs(UnmanagedType.U1)]`.
+- [x] Coordinate `SdlSharp.ImGui` update for the IGSharp_IO / IGSharp_Style
+  refactor — done: the C# side now declares layout-matching mirrors, validated
+  at startup via `IGSharp_ValidateLayouts`, and regenerates its P/Invoke layer
+  from this header with `sdl-sharp/scripts/gen-imgui-native.py`.
 
 ### Requested from C# consumer (`sdl-sharp/SdlSharp.ImGui`)
 
