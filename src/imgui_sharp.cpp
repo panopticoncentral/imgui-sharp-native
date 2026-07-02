@@ -48,7 +48,7 @@ void IGSharp_CheckVersion(void)
 
 // Context creation and access
 
-IGSharp_Context* IGSharp_CreateContext(void)       { return reinterpret_cast<IGSharp_Context*>(ImGui::CreateContext()); }
+IGSharp_Context* IGSharp_CreateContext(void* shared_font_atlas) { return reinterpret_cast<IGSharp_Context*>(ImGui::CreateContext((ImFontAtlas*)shared_font_atlas)); }
 void             IGSharp_DestroyContext(IGSharp_Context* ctx) { ImGui::DestroyContext(reinterpret_cast<ImGuiContext*>(ctx)); }
 IGSharp_Context* IGSharp_GetCurrentContext(void)   { return reinterpret_cast<IGSharp_Context*>(ImGui::GetCurrentContext()); }
 void             IGSharp_SetCurrentContext(IGSharp_Context* ctx) { ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext*>(ctx)); }
@@ -1656,6 +1656,9 @@ int   IGSharp_FontGlyphRangesBuilder_BuildRanges(void* builder, unsigned short* 
 }
 
 // ImFontAtlas
+
+void* IGSharp_FontAtlas_Create(void)                { return (void*)IM_NEW(ImFontAtlas)(); }
+void  IGSharp_FontAtlas_Destroy(void* atlas)        { IM_DELETE((ImFontAtlas*)atlas); }
 
 void* IGSharp_FontAtlas_AddFontDefault(void* atlas, const void* font_cfg)
 { return ((ImFontAtlas*)atlas)->AddFontDefault((const ImFontConfig*)font_cfg); }

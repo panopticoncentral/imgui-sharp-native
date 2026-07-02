@@ -59,14 +59,14 @@ IGSHARP_API void IGSharp_CheckVersion(void);
 //-----------------------------------------------------------------------------
 
 // Forward declarations: ImGui layer
-typedef struct IGSharp_Context IGSharp_Context;
-typedef struct IGSharp_IO    IGSharp_IO;
-typedef struct IGSharp_Style IGSharp_Style;
+typedef struct IGSharp_Context    IGSharp_Context;
+typedef struct IGSharp_IO         IGSharp_IO;
+typedef struct IGSharp_Style      IGSharp_Style;
 typedef struct IGSharp_PlatformIO IGSharp_PlatformIO;
 
 // Callback typedefs
-typedef int         (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
-typedef void        (*IGSharp_SizeCallback)(void* data);      // data = ImGuiSizeCallbackData* (use IGSharp_SizeCallbackData_* accessors)
+typedef int   (*IGSharp_InputTextCallback)(void* data); // data = ImGuiInputTextCallbackData*
+typedef void  (*IGSharp_SizeCallback)(void* data);      // data = ImGuiSizeCallbackData* (use IGSharp_SizeCallbackData_* accessors)
 typedef void* (*IGSharp_MemAllocFunc)(size_t sz, void* user_data);
 typedef void  (*IGSharp_MemFreeFunc)(void* ptr, void* user_data);
 
@@ -105,19 +105,19 @@ typedef struct {
 //-----------------------------------------------------------------------------
 
 // Context creation and access
-IGSHARP_API IGSharp_Context* IGSharp_CreateContext(void); // MISSING: ImFontAtlas
+IGSHARP_API IGSharp_Context* IGSharp_CreateContext(void* shared_font_atlas); // shared_font_atlas: ImFontAtlas* (NULL = context creates & owns its own)
 IGSHARP_API void             IGSharp_DestroyContext(IGSharp_Context* ctx);
 IGSHARP_API IGSharp_Context* IGSharp_GetCurrentContext(void);
 IGSHARP_API void             IGSharp_SetCurrentContext(IGSharp_Context* ctx);
 
 // Main
-IGSHARP_API IGSharp_IO*    IGSharp_GetIO(void);
-IGSHARP_API IGSharp_Style* IGSharp_GetStyle(void);
+IGSHARP_API IGSharp_IO*         IGSharp_GetIO(void);
 IGSHARP_API IGSharp_PlatformIO* IGSharp_GetPlatformIO(void);
-IGSHARP_API void  IGSharp_NewFrame(void);
-IGSHARP_API void  IGSharp_EndFrame(void);
-IGSHARP_API void  IGSharp_Render(void);
-IGSHARP_API void* IGSharp_GetDrawData(void);
+IGSHARP_API IGSharp_Style*      IGSharp_GetStyle(void);
+IGSHARP_API void                IGSharp_NewFrame(void);
+IGSHARP_API void                IGSharp_EndFrame(void);
+IGSHARP_API void                IGSharp_Render(void);
+IGSHARP_API void*               IGSharp_GetDrawData(void);
 
 // Demo, Debug, Information
 IGSHARP_API void        IGSharp_ShowDemoWindow(bool* p_open);
@@ -2281,6 +2281,12 @@ typedef enum {
 } IGSharp_FontAtlasFlags;
 
 // ImFontAtlas
+// Construct a standalone atlas (contexts normally create & own their own — reach that one via
+// the IGSharp_IO.Fonts field). Create one here only to share it across contexts by passing it to
+// IGSharp_CreateContext(); you then own it and must call IGSharp_FontAtlas_Destroy after the
+// sharing contexts are destroyed.
+IGSHARP_API void* IGSharp_FontAtlas_Create(void);
+IGSHARP_API void  IGSharp_FontAtlas_Destroy(void* atlas);
 // font_cfg (const ImFontConfig*, may be NULL) and glyph_ranges (const ImWchar*/unsigned short*, may be
 // NULL) mirror the upstream optional parameters: pass them to merge fonts, set oversampling, restrict
 // glyph ranges, etc. Build a config with IGSharp_FontConfig_Create()/IGSharp_FontConfig_Set*().
