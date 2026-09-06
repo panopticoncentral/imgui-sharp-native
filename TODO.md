@@ -6,13 +6,14 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 ## Done ✅
 
 - CMake build system (imgui core + SDL3 backends + C wrapper → single shared lib)
-- Full master-branch public API coverage (~825 exported functions) — the
+- Full master-branch public API coverage (866 exported functions) — the
   everyday widget surface plus all previously-skipped categories: logging,
   ini settings serialization, clipboard/IME/allocator override setters,
   debug and error-recovery tools, font introspection, and the
-  `ImGuiStorage` / `ImGuiTextFilter` / `ImGuiTextBuffer` helpers. Only
-  variadic/`V`-suffix overloads and docking/multi-viewport remain out of
-  scope. NOTE: the C# consumer (`SdlSharp.ImGui`) must add matching
+  `ImGuiStorage` / `ImGuiTextFilter` / `ImGuiTextBuffer` helpers. See README
+  for helper and backend exclusions in addition to variadic/`V`-suffix
+  overloads and docking/multi-viewport. NOTE: the C# consumer (`SdlSharp.ImGui`)
+  must add matching
   `[StructLayout]` mirrors and P/Invoke declarations for this new surface.
 - DrawList API (primitives, path builder, images, clipping)
 - Misc utilities (CalcTextSize, GetColorU32, ColorConvert*, key/mouse queries, viewport)
@@ -40,6 +41,12 @@ Used by `SdlSharp.ImGui` in the `../sdl-sharp/` project.
 
 ### Cross-platform builds
 - [ ] Linux build support (requires building SDL3 from source — upstream ships no Linux binaries)
+
+### Review follow-up
+- [x] Add managed declarations for `IGSharp_DrawList_ResetForNewFrame` and
+  `IGSharp_ImplSDLGPU3_RenderDrawDataWithPipeline` in the local `SdlSharp.ImGui`
+  checkout, with owned draw-list API and headless integration test.
+- [ ] Update the managed native-package reference when publishing the new exports.
 
 ### Maintenance
 - [ ] Track Dear ImGui version updates (currently pinned to v1.92.7 via submodule)

@@ -1424,7 +1424,15 @@ IGSharp_DrawList* IGSharp_DrawList_CloneOutput(IGSharp_DrawList* dl)            
 
 // Create/destroy a standalone ImDrawList (e.g. to own a CloneOutput result or build a custom list).
 
-IGSharp_DrawList* IGSharp_DrawList_Create(IGSharp_DrawListSharedData* shared_data)                 { return IM_NEW(ImDrawList)((ImDrawListSharedData*)shared_data); }
+IGSharp_DrawList* IGSharp_DrawList_Create(IGSharp_DrawListSharedData* shared_data)
+{
+    ImDrawList* dl = IM_NEW(ImDrawList)((ImDrawListSharedData*)shared_data);
+    if (shared_data)
+        dl->_ResetForNewFrame();
+    return dl;
+}
+
+void IGSharp_DrawList_ResetForNewFrame(IGSharp_DrawList* dl) { DL(dl)->_ResetForNewFrame(); }
 void IGSharp_DrawList_Destroy(IGSharp_DrawList* dl)                         { IM_DELETE(DL(dl)); }
 
 // ImDrawList: Channels splitting/merging
@@ -1660,7 +1668,7 @@ void IGSharp_FontGlyphRangesBuilder_AddText(IGSharp_FontGlyphRangesBuilder* buil
 void IGSharp_FontGlyphRangesBuilder_AddRanges(IGSharp_FontGlyphRangesBuilder* builder, const unsigned short* ranges)
 { ((ImFontGlyphRangesBuilder*)builder)->AddRanges((const ImWchar*)ranges); }
 
-// Builds the glyph ranges and copies up to out_ranges_capacity entries (terminated by a trailing 0)
+// Copies a prefix and returns the required size; only a complete copy is valid glyph ranges.
 
 int IGSharp_FontGlyphRangesBuilder_BuildRanges(IGSharp_FontGlyphRangesBuilder* builder, unsigned short* out_ranges, int out_ranges_capacity)
 {

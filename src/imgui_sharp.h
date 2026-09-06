@@ -2171,8 +2171,14 @@ IGSHARP_API void              IGSharp_DrawList_AddCallback(IGSharp_DrawList* dra
 IGSHARP_API void              IGSharp_DrawList_AddDrawCmd(IGSharp_DrawList* draw_list);
 IGSHARP_API IGSharp_DrawList* IGSharp_DrawList_CloneOutput(IGSharp_DrawList* draw_list);   // returns a heap ImDrawList*; free with IGSharp_DrawList_Destroy
 // Create/destroy a standalone ImDrawList (e.g. to own a CloneOutput result or build a custom list).
-// shared_data: pass IGSharp_GetDrawListSharedData(), or NULL.
+// For drawing, pass IGSharp_GetDrawListSharedData() after IGSharp_NewFrame().
+// The result is initialized; push a clip rect and texture before adding primitives.
+// Destroy the list before its owning context/shared_data. NULL creates an empty
+// storage-only list that must not be used for drawing or ResetForNewFrame.
+// Reset a standalone drawing list after NewFrame() on each subsequent frame,
+// then push its clip rect and texture again. Do not reset window-owned lists or clones.
 IGSHARP_API IGSharp_DrawList* IGSharp_DrawList_Create(IGSharp_DrawListSharedData* shared_data);      // ImDrawListSharedData*
+IGSHARP_API void              IGSharp_DrawList_ResetForNewFrame(IGSharp_DrawList* draw_list);
 IGSHARP_API void              IGSharp_DrawList_Destroy(IGSharp_DrawList* draw_list);
 
 // ImDrawList: Channels splitting/merging
@@ -2361,9 +2367,11 @@ IGSHARP_API void                            IGSharp_FontGlyphRangesBuilder_SetBi
 IGSHARP_API void                            IGSharp_FontGlyphRangesBuilder_AddChar(IGSharp_FontGlyphRangesBuilder* builder, unsigned short c);
 IGSHARP_API void                            IGSharp_FontGlyphRangesBuilder_AddText(IGSharp_FontGlyphRangesBuilder* builder, const char* text, const char* text_end);
 IGSHARP_API void                            IGSharp_FontGlyphRangesBuilder_AddRanges(IGSharp_FontGlyphRangesBuilder* builder, const unsigned short* ranges);
-// Builds the glyph ranges and copies up to out_ranges_capacity entries (terminated by a trailing 0)
-// into out_ranges. Returns the total number of entries the built ranges require (which may exceed
-// out_ranges_capacity); call once with out_ranges=NULL/capacity=0 to query the needed size.
+// Returns the required entry count, including the trailing 0. Call first with
+// out_ranges=NULL/capacity=0, allocate that many entries, then call again.
+// Copies up to out_ranges_capacity entries. If the return value exceeds capacity,
+// the output is an incomplete prefix: it may lack a terminator or complete pairs
+// and MUST NOT be used as glyph ranges. Retry with the returned capacity.
 IGSHARP_API int IGSharp_FontGlyphRangesBuilder_BuildRanges(IGSharp_FontGlyphRangesBuilder* builder, unsigned short* out_ranges, int out_ranges_capacity);
 
 // ImFontAtlas custom rectangles

@@ -41,10 +41,14 @@ jobs:
           cmake -S . -B build `
             -A ${{ matrix.arch }} `
             -DSDL3_ROOT="$env:SDL3_ROOT" `
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release -DIMGUI_SHARP_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Run regression tests
+        if: matrix.arch != 'ARM64'
+        run: ctest --test-dir build -C Release --output-on-failure
 
       - name: Verify exports
         shell: pwsh
@@ -99,10 +103,18 @@ jobs:
           cmake -S . -B build \
             -DSDL3_ROOT="$SDL3_ROOT" \
             -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release -DIMGUI_SHARP_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Run regression tests on matching host architecture
+        run: |
+          if [ "$(uname -m)" = "${{ matrix.arch }}" ]; then
+            ctest --test-dir build -C Release --output-on-failure
+          else
+            echo "Tests compiled for ${{ matrix.arch }}; execution requires a matching host."
+          fi
 
       - name: Verify exports
         run: |

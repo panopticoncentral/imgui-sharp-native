@@ -52,7 +52,7 @@ SDL3 instance.
 
 ```xml
 <PackageReference Include="SdlSharp" Version="..." />
-<PackageReference Include="ImguiSharp.Redist" Version="0.1.0-preview.1" />
+<PackageReference Include="ImguiSharp.Redist" Version="0.3.0-preview.2" />
 ```
 
 `SdlSharp.ImGui` depends transitively via `SdlSharp`; applications only need
@@ -99,12 +99,12 @@ can be cut by pushing a `v*` release tag.
    `ImGuiMultiSelectIO`, `ImGuiSelectionRequest`, `ImGuiTableSortSpecs`,
    `ImGuiInputTextCallbackData`) shows up as a compile error in
    `imgui_sharp.cpp` — fix the shim.
-3. **Binary-layout check still passes at runtime.** `IGSharp_CheckVersion`
-   calls `DebugCheckVersionAndDataLayout` which validates `ImGuiIO`,
-   `ImGuiStyle`, `ImVec2/4`, `ImDrawVert`, `ImDrawIdx` sizes against what
-   the C# caller expects. If this asserts after a bump, the C# wrapper
-   (`SdlSharp.ImGui`) needs matching struct-layout updates before
-   releasing.
+3. **Binding layout validation still passes at runtime.** The C# binding
+   calls `IGSharp_ValidateLayouts` with its mirrored struct sizes. A false
+   result requires matching binding updates before releasing. This checks
+   sizes, not individual binding field offsets or same-size semantic changes.
+   `IGSharp_CheckVersion` separately checks the native build against its own
+   ImGui headers; it receives no caller version or layout information.
 4. **CI green on all 5 matrix legs.**
 5. **New APIs worth wrapping?** — `git -C third_party/imgui log vOLD..vNEW -- imgui.h`
    shows changes to the public header. Consider exposing any additions
@@ -112,10 +112,9 @@ can be cut by pushing a `v*` release tag.
 
 ### Version sensitivity
 
-- `IMGUI_VERSION_NUM` is baked into the shared library. A library/C#-caller
-  mismatch at runtime asserts in `DebugCheckVersionAndDataLayout` rather
-  than silently corrupting — always ship `ImguiSharp.Redist` and the
-  matching `SdlSharp.ImGui` binding together.
+- Always ship `ImguiSharp.Redist` and the matching `SdlSharp.ImGui` binding
+  together. The binding's startup size checks catch size mismatches, but do
+  not guarantee compatibility across different ImGui versions.
 - Breaking upstream changes warrant an `ImguiSharp.Redist` major version
   bump.
 - The `-docking` tag is a separate upstream branch we don't track.
@@ -124,15 +123,16 @@ can be cut by pushing a `v*` release tag.
 
 ## API coverage
 
-The wrapper exports ~825 `IGSharp_*` C functions covering essentially the
+The wrapper exports 866 `IGSharp_*` C functions covering essentially the
 entire master-branch public API: the everyday widget surface (windows,
 layout, ID/style stacks, all widget families, popups, menus, tables, tabs),
 the DrawList API, fonts and font introspection, ListClipper, InputText
 callbacks, plots, drag and drop, multi-select, table sort specs, logging,
 ini settings serialization, clipboard/IME/allocator override setters,
 debug and error-recovery tools, and the `ImGuiStorage` / `ImGuiTextFilter`
-/ `ImGuiTextBuffer` helpers. The only public APIs not wrapped are
-variadic/`V`-suffix overloads and docking/multi-viewport (see below). For
+/ `ImGuiTextBuffer` helpers. Coverage excludes
+variadic/`V`-suffix overloads, docking/multi-viewport, and a few helper operations
+described below. Backend coverage is listed separately. For
 a concrete list, see [`src/imgui_sharp.h`](src/imgui_sharp.h).
 
 `ImGuiIO` and `ImGuiStyle` are exposed as layout-compatible C structs
@@ -143,10 +143,47 @@ the asserts in `src/imgui_sharp_layout_check.cpp`.
 
 ### Intentionally skipped APIs
 
-Coverage is otherwise complete; only two categories are deliberately out
-of scope.
+The main exclusions are listed below. Opaque objects also hide internal fields,
+and `ImGuiSelectionBasicStorage::Swap` is intentionally omitted.
 
 | Category | Examples | Reason | Addable? |
 |---|---|---|---|
 | Variadic / `V`-suffix overloads | `TextV`, `TextColoredV`, `BulletTextV`, `SeparatorTextV` | The typed/non-variadic form is enough — C# formats at the call site before calling `Text(...)` | No — format at call site |
 | Docking / multi-viewport | `DockSpace`, `DockBuilder*`, `ImGuiDockNode`, viewport-as-OS-window, the platform/renderer callback table | Not on the master branch we track, and our SDL3 + SDL_GPU backends are single-viewport | No (until upstream merges to master) |
+
+## Standalone draw lists
+
+After `IGSharp_NewFrame`, create a list with
+`IGSharp_DrawList_Create(IGSharp_GetDrawListSharedData())`. It is initialized
+for drawing; push a clip rect and texture before adding primitives. On each
+subsequent frame, call `IGSharp_DrawList_ResetForNewFrame` after `NewFrame`,
+then restore the clip rect and texture. Destroy the list before its context.
+A list created with NULL shared data is storage-only. Clones are renderable
+snapshots, not lists that can be reset or extended.
+
+## Backend coverage
+
+The SDL3 platform wrapper supports SDL_GPU initialization, events, frame setup,
+and shutdown. The SDL_GPU renderer supports initialization, frame preparation,
+rendering, and shutdown. `IGSharp_ImplSDLGPU3_RenderDrawDataWithPipeline` accepts
+an optional custom graphics pipeline; the original `RenderDrawData` entry point
+continues to use the default pipeline.
+
+Device-object recreation, manual `UpdateTexture`, and typed access to the
+SDL_GPU callback render state (including sampler selection) are not exposed.
+Other SDL3 renderer initialization modes are also outside this backend's scope.
+
+## Regression checks
+
+The opt-in tests run headlessly and compile the public headers as C and C++.
+They exercise standalone draw-list creation/reuse, glyph-range size queries
+and copying, and custom/default pipeline forwarding against recording stubs.
+
+```sh
+cmake -S . -B build -DIMGUI_SHARP_BUILD_TESTS=ON -DSDL3_ROOT="/path/to/SDL3"
+cmake --build build --config Debug
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+The pipeline forwarding test uses the real upstream declarations but does not
+exercise GPU rendering. Run tests on a host that can execute the target architecture.

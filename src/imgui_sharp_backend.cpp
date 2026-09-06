@@ -40,3 +40,6 @@ void IGSharp_ImplSDLGPU3_PrepareDrawData(void* draw_data, SDL_GPUCommandBuffer* 
 
 void IGSharp_ImplSDLGPU3_RenderDrawData(void* draw_data, SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* render_pass)
 { ImGui_ImplSDLGPU3_RenderDrawData((ImDrawData*)draw_data, command_buffer, render_pass, nullptr); }
+
+void IGSharp_ImplSDLGPU3_RenderDrawDataWithPipeline(void* draw_data, SDL_GPUCommandBuffer* command_buffer, SDL_GPURenderPass* render_pass, SDL_GPUGraphicsPipeline* pipeline)
+{ ImGui_ImplSDLGPU3_RenderDrawData((ImDrawData*)draw_data, command_buffer, render_pass, pipeline); }

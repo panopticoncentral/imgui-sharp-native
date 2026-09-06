@@ -93,3 +93,10 @@ install(TARGETS imgui_sharp
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
 )
+
+# Opt-in headless regression tests; production/redist builds remain unchanged.
+option(IMGUI_SHARP_BUILD_TESTS "Build wrapper regression tests" OFF)
+if(IMGUI_SHARP_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
