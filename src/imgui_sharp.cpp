@@ -85,6 +85,7 @@ bool IGSharp_ShowStyleSelector(const char* label)               { return ImGui::
 void IGSharp_ShowFontSelector(const char* label)                { ImGui::ShowFontSelector(label); }
 void IGSharp_ShowUserGuide(void)                                { ImGui::ShowUserGuide(); }
 const char* IGSharp_GetVersion(void)          { return ImGui::GetVersion(); }
+int IGSharp_GetVersionNumber(void)             { return IMGUI_VERSION_NUM; }
 
 // Styles
 

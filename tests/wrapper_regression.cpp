@@ -1,4 +1,5 @@
 #include "imgui_sharp.h"
+#include "imgui.h"
 #include <cstdio>
 #include <cstdlib>
 
@@ -18,6 +19,8 @@ static void DrawLine(IGSharp_DrawList* list)
 
 int main()
 {
+    Check(IGSharp_GetVersionNumber() == IMGUI_VERSION_NUM, "Version number export mismatch");
+
     IGSharp_Context* context = IGSharp_CreateContext(nullptr);
     IGSharp_IO* io = IGSharp_GetIO();
     io->DisplaySize = {640, 480};

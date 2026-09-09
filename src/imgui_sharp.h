@@ -217,6 +217,7 @@ IGSHARP_API bool        IGSharp_ShowStyleSelector(const char* label);
 IGSHARP_API void        IGSharp_ShowFontSelector(const char* label);
 IGSHARP_API void        IGSharp_ShowUserGuide(void);
 IGSHARP_API const char* IGSharp_GetVersion(void);
+IGSHARP_API int         IGSharp_GetVersionNumber(void);
 
 // Styles
 // dst (IGSharp_Style*, may be NULL == current style) selects which style the palette is written into.

@@ -52,7 +52,7 @@ SDL3 instance.
 
 ```xml
 <PackageReference Include="SdlSharp" Version="..." />
-<PackageReference Include="ImguiSharp.Redist" Version="0.3.0-preview.2" />
+<PackageReference Include="ImguiSharp.Redist" Version="0.3.0-preview.3" />
 ```
 
 `SdlSharp.ImGui` depends transitively via `SdlSharp`; applications only need
@@ -123,7 +123,7 @@ can be cut by pushing a `v*` release tag.
 
 ## API coverage
 
-The wrapper exports 866 `IGSharp_*` C functions covering essentially the
+The wrapper exports 867 `IGSharp_*` C functions covering essentially the
 entire master-branch public API: the everyday widget surface (windows,
 layout, ID/style stacks, all widget families, popups, menus, tables, tabs),
 the DrawList API, fonts and font introspection, ListClipper, InputText
